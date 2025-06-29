@@ -21,36 +21,30 @@ uvicorn main:app --reload
    ```bash
    pip install -r requirements.txt
    ```
-   
-2. Setup background workers
-   install redis
-   ```bash
-   brew install redis
-   ```
 
-3. Run the Migration Script
+2. Run the Migration Script
    ```bash
    chmod +x ./run_migrations.sh
    ./run_migrations.sh
    ```
 
-4. Run the Migration Command
+3. Run the Migration Command
    ```bash
     alembic revision --autogenerate -m "Migration message"
     ```
 
-5. Apply Migration to the Db
+4. Apply Migration to the Db
    ```bash
    alembic upgrade head
    ```
 
-6. Start the Servers(redi, celery and fastapi)
+5. Start the Servers(redi, celery and fastapi)
    ```bash
-   chmod +x ./run_servers.sh
-   ./run_servers.sh
+   chmod +x ./run_servers.sh && ./run_servers.sh
+
    ```
 
-7. visit the url
+6. visit the url
    ```bash
    http://localhost:8000/api/v1/users/
    http://localhost:8000/api/v1/users/login/
