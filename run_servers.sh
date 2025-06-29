@@ -77,7 +77,7 @@ CELERY_PID=$!
 success "Celery started with PID $CELERY_PID"
 
 info "Step 8: Starting FastAPI server..."
-uvicorn main:app --reload &
+uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} &
 UVICORN_PID=$!
 success "FastAPI started with PID $UVICORN_PID"
 
