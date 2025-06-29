@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file located in the parent directory
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-ENV_PATH = os.path.join(BASE_DIR, '.env')
+ENV_PATH = os.path.join(BASE_DIR, '.env.production')
 load_dotenv(ENV_PATH)
 
 def parse_cors(value: str) -> List[str]:
@@ -51,7 +51,13 @@ class Settings:
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
-        if self.ENVIRONMENT in ["local", "staging", "production"]:
+        if self.ENVIRONMENT in ["local"]:
+            # return f"sqlite+aiosqlite:///{self.SQLITE_DB_PATH}"  # SQLite URI
+            return (
+                f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+                f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+            )
+        elif self.ENVIRONMENT in ["staging", "production"]:
             # return f"sqlite+aiosqlite:///{self.SQLITE_DB_PATH}"  # SQLite URI
             return (
                 f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
