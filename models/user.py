@@ -5,7 +5,7 @@ from core.utils.encryption import PasswordManager
 from core.utils.generator import generator
 from datetime import datetime
 from enum import Enum as PyEnum
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 
@@ -16,8 +16,8 @@ class AddressType(PyEnum):
 class Address(Base):
     __tablename__ = "addresses"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, default=lambda: generator.get_id())
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    id: Mapped[str] = mapped_column(String(CHAR_LENGTH), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
     user: Mapped["User"] = relationship("User", back_populates="addresses", uselist=False)
     
     street: Mapped[str] = mapped_column(String(CHAR_LENGTH), nullable=True)
@@ -66,7 +66,7 @@ class UserGender(PyEnum):
 class User(Base):
     __tablename__ = "users"
     
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, default=lambda: generator.get_id())
+    id: Mapped[str] = mapped_column(String(CHAR_LENGTH), primary_key=True)
     
     firstname: Mapped[str] = mapped_column(String(CHAR_LENGTH))
     lastname: Mapped[str] = mapped_column(String(CHAR_LENGTH))
@@ -90,6 +90,8 @@ class User(Base):
 
     access_token: Mapped[str] = mapped_column(Text, nullable=True)
     refresh_token: Mapped[str] = mapped_column(Text, nullable=True)
+    activation_token: Mapped[Optional[str]] = mapped_column(String(CHAR_LENGTH), nullable=True)
+    activation_token_expires: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     @property
     def full_name(self):

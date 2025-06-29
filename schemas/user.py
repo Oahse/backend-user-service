@@ -36,18 +36,20 @@ class AddressBase(BaseModel):
 
 
 class AddressCreate(AddressBase):
-    user_id: int  # Required when creating, link to User
+    user_id: str  # Required when creating, link to User
 
 
 class AddressRead(AddressBase):
-    id: int
-    user_id: int
+    id: str
+    user_id: str
     created_at: datetime
     updated_at: datetime
 
     class Config:
         from_attributes = True
 
+class AddressUpdate(AddressBase):
+    pass
 
 class UserBase(BaseModel):
     firstname: str
@@ -67,7 +69,7 @@ class UserCreate(UserBase):
 
 
 class UserRead(UserBase):
-    id: int
+    id: str
     created_at: datetime
     updated_at: datetime
     addresses: List[AddressRead] = []

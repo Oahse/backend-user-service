@@ -10,7 +10,7 @@ CHAR_LENGTH=255
 
 # Database engine
 SQLALCHEMY_DATABASE_URL = str(settings.SQLALCHEMY_DATABASE_URI) 
-
+print(SQLALCHEMY_DATABASE_URL,'------')
 
 engine_db = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True)
 

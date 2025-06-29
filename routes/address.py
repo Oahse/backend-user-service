@@ -9,7 +9,7 @@ from services.address import AddressService
 
 router = APIRouter(prefix='/api/v1', tags=["Addresses"])
 
-@router.post("/", response_model=Response[AddressRead], status_code=status.HTTP_201_CREATED)
+@router.post("/")
 async def create_address(address_in: AddressCreate, db: AsyncSession = Depends(get_db)):
     service = AddressService(db)
     try:
@@ -24,10 +24,10 @@ async def create_address(address_in: AddressCreate, db: AsyncSession = Depends(g
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    return Response(data=address)
+    return Response(data=address, code=201)
 
 
-@router.get("/{address_id}", response_model=Response[AddressRead])
+@router.get("/{address_id}")
 async def get_address(address_id: int, db: AsyncSession = Depends(get_db)):
     service = AddressService(db)
     address = await service.get_address_by_id(address_id)
@@ -36,7 +36,7 @@ async def get_address(address_id: int, db: AsyncSession = Depends(get_db)):
     return Response(data=address)
 
 
-@router.put("/{address_id}", response_model=Response[AddressRead])
+@router.put("/{address_id}")
 async def update_address(address_id: int, address_in: AddressUpdate, db: AsyncSession = Depends(get_db)):
     service = AddressService(db)
     updated_address = await service.update_address(address_id, **address_in.dict(exclude_unset=True))
@@ -45,7 +45,7 @@ async def update_address(address_id: int, address_in: AddressUpdate, db: AsyncSe
     return Response(data=updated_address)
 
 
-@router.delete("/{address_id}", response_model=Response[bool])
+@router.delete("/{address_id}")
 async def delete_address(address_id: int, db: AsyncSession = Depends(get_db)):
     service = AddressService(db)
     success = await service.delete_address(address_id)
@@ -54,7 +54,7 @@ async def delete_address(address_id: int, db: AsyncSession = Depends(get_db)):
     return Response(data=True)
 
 
-@router.get("/", response_model=Response[List[AddressRead]])
+@router.get("/")
 async def list_addresses(user_id: Optional[int] = None, skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
     service = AddressService(db)
     addresses = await service.list_addresses(user_id=user_id, skip=skip, limit=limit)

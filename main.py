@@ -1,5 +1,5 @@
 from redis import asyncio as aioredis
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from typing import List
 from core.config import Settings
 from starlette.middleware.sessions import SessionMiddleware
@@ -52,19 +52,22 @@ async def read_root():
 
 # Handle validation errors globally
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request, exc: RequestValidationError):
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
     errors = []
     for error in exc.errors():
-        e = {}
-        e['type'] = error['type']
-        e['loc'] = error['loc']
-        e['msg'] = error['msg']
-        if 'ctx' in error.keys():
-            e['ctx'] = error['ctx']['error']
-
+        e = {
+            "type": error.get("type"),
+            "loc": error.get("loc"),
+            "msg": error.get("msg"),
+        }
+        if "ctx" in error:
+            e["ctx"] = error["ctx"]
         errors.append(e)
-    errors = errors[0] if len(errors) == 1 else errors
 
-    return Response(message=errors, success=False, code=422)
+    # If only one error, return as a single object
+    message = errors[0] if len(errors) == 1 else errors
+
+
+    return Response(message=message, success=False, code=422)
 
 
