@@ -4,22 +4,23 @@ set -e  # Exit on any error
 chmod +x ./run_migrations.sh
 ./run_migrations.sh
 
+echo "Step 4: Run the Migration Command and Apply Migration to the Db..."
 alembic revision --autogenerate -m "Migration message"
 alembic upgrade head
 
-echo "Step 1: Starting Redis..."
+echo "Step 5: Starting Redis..."
 brew services start redis
 
 sleep 2  # Give Redis time to start
 
-echo "Checking Redis status..."
+echo "Step 6: Checking Redis status..."
 redis-cli ping
 
-echo "Step 2: Starting Celery worker..."
+echo "Step 7: Starting Celery worker..."
 celery -A tasks.celery_app worker --loglevel=info &
 CELERY_PID=$!
 
-echo "Step 3: Starting FastAPI server..."
+echo "Step 8: Starting FastAPI server..."
 uvicorn main:app --reload &
 UVICORN_PID=$!
 

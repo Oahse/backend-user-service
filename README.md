@@ -22,29 +22,13 @@ uvicorn main:app --reload
    pip install -r requirements.txt
    ```
 
-2. Run the Migration Script
-   ```bash
-   chmod +x ./run_migrations.sh
-   ./run_migrations.sh
-   ```
-
-3. Run the Migration Command
-   ```bash
-    alembic revision --autogenerate -m "Migration message"
-    ```
-
-4. Apply Migration to the Db
-   ```bash
-   alembic upgrade head
-   ```
-
-5. Start the Servers(redi, celery and fastapi)
+2. Start the Servers(redi, celery and fastapi)
    ```bash
    chmod +x ./run_servers.sh && ./run_servers.sh
 
    ```
 
-6. visit the url
+3. visit the url
    ```bash
    http://localhost:8000/api/v1/users/
    http://localhost:8000/api/v1/users/login/
