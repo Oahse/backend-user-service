@@ -2,7 +2,9 @@
 from celery import Celery
 from core.utils.messages.email import send_activation_email
 import asyncio
-celery_app = Celery('worker', broker='redis://localhost:6379/0')
+from core.config import settings
+
+celery_app = Celery('worker', broker=str(settings.REDIS_URL) )
 
 @celery_app.task
 def send_email_celery(to_email: str,activation_link: str,from_email: str,from_password: str):

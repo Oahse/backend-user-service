@@ -25,8 +25,7 @@ class Settings:
     ENVIRONMENT: Literal["local", "staging", "production"] = os.getenv('ENVIRONMENT', 'local')
 
     # Redis
-    REDIS_HOST: str = os.getenv('REDIS_HOST', 'localhost')
-    REDIS_PORT: str = os.getenv('REDIS_PORT', '6379')
+    REDIS_URL: str = os.getenv('REDIS_URL', 'redis-10990.c52.us-east-1-4.ec2.redns.redis-cloud.com:10990')
 
     # PostgreSQL
     POSTGRES_USER: str = os.getenv('POSTGRES_USER', 'postgres')
