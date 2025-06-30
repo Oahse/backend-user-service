@@ -4,11 +4,9 @@ from typing import List
 from core.database import get_db
 from core.utils.response import Response
 from models.user import UserRole, User
-
-from tasks import enqueue_email_task
 from services.user import UserService  # assuming your UserService is here
 from schemas.user import UserCreate, UserRead, UserUpdate,UserLogin,ChangePasswordRequest  # your Pydantic schemas
-from core.utils.messages.email import send_activation_email
+from core.utils.messages.email import send_email
 
 router = APIRouter(prefix='/api/v1/users', tags=["Users"])
 
@@ -36,7 +34,7 @@ async def create_user(user_in: UserCreate, background_tasks: BackgroundTasks, db
     activation_link = "https://yourapp.com/activate?token=abc123"
     
     # send email in background (won't block the response)
-    background_tasks.add_task(enqueue_email_task, 
+    background_tasks.add_task(send_email, 
                               to_email="user@example.com", 
                               activation_link=activation_link,
                               from_email="youremail@gmail.com",

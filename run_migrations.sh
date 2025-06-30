@@ -17,17 +17,17 @@ alembic init -t async alembic # for asynchronous support
 echo "Step 3.1: Running alembic_env_py_generator to update alembic/env.py..."
 python3 -m alembic_env_py_generator
 
-# # Step 4: Generate a new migration (with an initial migration message)
-# echo "Step 4: Generating initial migration..."
-# alembic revision --autogenerate -m "Initial tables"
+# Step 4: Generate a new migration (with an initial migration message)
+echo "Step 4: Generating initial migration..."
+alembic revision --autogenerate -m "Initial tables"
 
-# # Step 5: Apply the migrations (Upgrade to the latest revision)
-# echo "Step 5: Applying migrations (upgrading to the latest revision)..."
-# alembic upgrade head
+# Step 5: Apply the migrations (Upgrade to the latest revision)
+echo "Step 5: Applying migrations (upgrading to the latest revision)..."
+alembic upgrade head
 
 # Optional: If you want to check the current status of the migrations
 # You can uncomment the line below to see the current status
-# echo "Step 6: Checking current migration status..."
-# alembic current
+echo "Step 6: Checking current migration status..."
+alembic current
 
 

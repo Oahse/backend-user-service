@@ -2,6 +2,7 @@ import smtplib, os
 from aiosmtplib import SMTP
 from email.message import EmailMessage
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+import asyncio
 
 # Set up Jinja2 environment pointing to your templates folder
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -34,3 +35,10 @@ async def send_activation_email(to_email: str, activation_link: str, from_email:
     await smtp.sendmail(from_email, to_email, msg.as_string())
     await smtp.quit() 
     
+def send_email(to_email: str,activation_link: str,from_email: str,from_password: str):
+    asyncio.run(send_activation_email( 
+                              to_email=to_email, 
+                              activation_link=activation_link,
+                              from_email=from_email,
+                              from_password=from_password)
+                              )
