@@ -21,4 +21,4 @@ info "Running migration script..."
 ./run_migrations.sh
 
 info "Starting FastAPI server..."
-uvicorn main:app --host localhost --port 8000 --reload
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
