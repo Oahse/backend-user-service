@@ -27,6 +27,7 @@ AsyncSessionDB = sessionmaker(
 async def get_db():
     try:
         async with AsyncSessionDB() as session:
+            print(f"Database connected")
             yield session
     except Exception as e:
         # Log the error or handle it accordingly
