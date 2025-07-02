@@ -29,8 +29,8 @@ if [ "$(uname)" == "Linux" ]; then
         cp .env.local .env
         echo "Copied .env.local to .env"
     elif [ "$1" == "prod" ]; then
-        cp .env.prod .env
-        echo "Copied .env.prod to .env"
+        cp .env.production .env
+        echo "Copied .env.production to .env"
     else
         echo "Unknown environment, skipping env copy"
     fi

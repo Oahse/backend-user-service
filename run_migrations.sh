@@ -1,8 +1,10 @@
 #!/bin/bash
+
 set -e
+
 # Step 1: Copy the environment file
 echo "Step 1: Copying the environment file..."
-cp .env.local .env
+# cp .env.local .env
 
 # Step 2: Run the Python script to generate the alembic.ini file
 echo "Step 2: Running alembic_ini_generator to create alembic.ini..."
