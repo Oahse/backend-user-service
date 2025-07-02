@@ -13,6 +13,8 @@ services:
     restart: always
     networks:
       - webnet
+    ports:
+      - "9092:9092"
     healthcheck:
       test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
       interval: 10s
@@ -27,8 +29,10 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: users_db
+    
     volumes:
-      - ./pgdata:/var/lib/postgresql/data
+      - users-db-data:/var/lib/postgresql/data
+
     ports:
       - "5432:5432"
     networks:
@@ -59,6 +63,8 @@ services:
     env_file:
       - .env
     working_dir: /usr/src/app
+    restart: always
+
 
 networks:
   webnet:

@@ -35,6 +35,21 @@ if [ "$(uname)" == "Linux" ]; then
         echo "Unknown environment, skipping env copy"
     fi
     chmod +x entrypoint.dev.sh
+    # chmod +x pg_backup.sh
+    # sudo apt update
+    # sudo apt install -y cron
+    # crontab -l
+    # 🕐 2. Add a Cron Job
+    # Edit your crontab:
+
+    # bash
+    # crontab -e
+    # Add a line like this to run the backup daily at 2 AM:
+
+    # bash
+    # 0 2 * * * /bin/bash /path/to/pg_backup.sh >> /path/to/pg_backup.log 2>&1
+    # 📁 Replace /path/to/pg_backup.sh and .log with the actual path.
+
 
 
 fi
