@@ -19,15 +19,13 @@ RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 # Copy app source
 COPY . .
 
-# Make the run_migrations.sh script executable and run it
-RUN chmod +x run_migrations.sh && ./run_migrations.sh
-    
-# Make entrypoint script executable
+RUN curl -s -o wait-for-it.sh https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh && \
+    chmod +x wait-for-it.sh
+
 RUN chmod +x ./entrypoint.dev.sh
 
 # Expose FastAPI port
 EXPOSE 8000
 
-# Set default command
+# Entrypoint script will handle waiting + migration + app start
 ENTRYPOINT ["./entrypoint.dev.sh"]
-

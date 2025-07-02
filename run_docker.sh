@@ -34,6 +34,8 @@ if [ "$(uname)" == "Linux" ]; then
     else
         echo "Unknown environment, skipping env copy"
     fi
+    chmod +x entrypoint.dev.sh
+
 
 fi
 

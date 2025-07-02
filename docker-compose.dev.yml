@@ -59,7 +59,6 @@ services:
     env_file:
       - .env
     working_dir: /usr/src/app
-    command: ["./entrypoint.dev.sh"]
 
 networks:
   webnet:

@@ -35,10 +35,5 @@ async def send_activation_email(to_email: str, activation_link: str, from_email:
     await smtp.sendmail(from_email, to_email, msg.as_string())
     await smtp.quit() 
     
-def send_email(to_email: str,activation_link: str,from_email: str,from_password: str):
-    asyncio.run(send_activation_email( 
-                              to_email=to_email, 
-                              activation_link=activation_link,
-                              from_email=from_email,
-                              from_password=from_password)
-                              )
+def send_email(to_email:str, activation_link:str, from_email:str, from_password:str):
+    asyncio.run(send_activation_email(to_email=to_email, activation_link=activation_link, from_email=from_email, from_password=from_password))

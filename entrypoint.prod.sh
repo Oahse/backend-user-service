@@ -13,17 +13,18 @@ success() { echo -e "${GREEN}[SUCCESS]${RESET} $1"; }
 error() { echo -e "${RED}[ERROR]${RESET} $1"; }
 warn() { echo -e "${YELLOW}[WARN]${RESET} $1"; }
 
+info "downloading wait-for-it.sh."
+curl -o wait-for-it.sh https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
+chmod +x wait-for-it.sh
+
+# Wait for users-db to be ready
+./wait-for-it.sh users-db:5432 --timeout=30 --strict -- info "Database is up"
+
 info "Making migration script executable..."
 chmod +x ./run_migrations.sh && success "Migration script made executable"
 
 info "Running migration script..."
 ./run_migrations.sh
-
-info "Generating and applying DB migrations..."
-alembic revision --autogenerate -m "Migration message" && success "Migration revision created"
-alembic upgrade head && success "Database upgraded"
-
-
 
 info "Starting Gunicorn server..."
 exec gunicorn main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000}

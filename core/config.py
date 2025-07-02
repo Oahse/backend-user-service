@@ -57,7 +57,8 @@ class Settings:
                 f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
             )
         elif self.ENVIRONMENT in ["staging", "production"]:
-            return 'postgresql+asyncpg://postgres:fAdvot-vyggeg-1rysku@db.htvauholjqlrfihihszd.supabase.co:5432/postgres'
+            return 'postgresql+asyncpg://postgres:postgres@users-db:5432/users_db'
+            # return 'postgresql+asyncpg://postgres:fAdvot-vyggeg-1rysku@db.htvauholjqlrfihihszd.supabase.co:5432/postgres'
             # return (
             #     f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             #     f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"

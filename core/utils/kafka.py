@@ -61,3 +61,67 @@ class KafkaProducer:
 # await kafka_producer.start()
 # await kafka_producer.send({"key": "value"})
 # await kafka_producer.stop()
+
+# | User Service Action      | Kafka Event Produced      | Consumed By                 |
+# | ------------------------ | ------------------------- | --------------------------- |
+# | User signed up           | `UserCreated`             | Notification, Analytics     |
+# | User updated profile     | `UserUpdated`             | Recommendation, Analytics   |
+# | User logged in/out       | `UserLogin`, `UserLogout` | Audit, Security, Analytics  |
+# | User deleted/deactivated | `UserDeleted`             | Account management services |
+
+API Gateway: Auth, routing, throttling
+
+Services (microservices or modular monolith):
+
+User Service: Auth, registration, JWT
+
+Product Service: Catalog, search (with optional Elasticsearch)
+
+Order Service: Checkout, order lifecycle
+
+Payment Service: Integrations with Stripe/PayPal
+Notification Service: Email/SMS using Kafka or RabbitMQ
+Analytics Service:
+
+
+{
+  "user_events": [
+    "user.created",
+    "user.verified",
+    "user.activated",
+    "user.deactivated",
+    "user.deleted",
+    "user.banned",
+    "user.unbanned",
+
+    "user.updated",
+    "user.email.changed",
+    "user.email.verified",
+    "user.phone.changed",
+    "user.phone.verified",
+    "user.password.changed",
+    "user.username.changed",
+    "user.role.changed",
+
+    "user.logged_in",
+    "user.logged_out",
+    "user.login_failed",
+    "user.mfa.enabled",
+    "user.mfa.disabled",
+    "user.session.expired",
+    "user.account.locked",
+    "user.account.unlocked",
+
+    "user.subscribed_to_newsletter",
+    "user.unsubscribed_from_newsletter",
+    "user.accepted_terms",
+    "user.revoked_consent",
+
+    "user.invited",
+    "user.invitation.accepted",
+    "user.joined_organization",
+    "user.left_organization",
+    "user.plan.upgraded",
+    "user.plan.downgraded"
+  ]
+}

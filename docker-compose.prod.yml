@@ -58,7 +58,6 @@ services:
     env_file:
       - .env
     restart: unless-stopped
-    command: ["./entrypoint.sh"]
 
 networks:
   webnet:
