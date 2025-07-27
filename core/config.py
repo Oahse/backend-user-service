@@ -1,7 +1,8 @@
 import os
 from typing import Any, Optional, List, Literal
 from dotenv import load_dotenv
-
+import json
+            
 # Load environment variables from .env file located in the parent directory
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 ENV_PATH = os.path.join(BASE_DIR, '.env.production')
@@ -34,7 +35,7 @@ class Settings:
     SMS_API_URL: Optional[str] = os.getenv('SMS_API_URL')
 
     # Push Notifications
-    FIREBASE_CREDENTIALS_PATH: Optional[str] = os.getenv('FIREBASE_CREDENTIALS_PATH')
+    FIREBASE_CREDENTIALS_JSON: Optional[str] = os.getenv('FIREBASE_CREDENTIALS_JSON','')
 
     # Celery
     CELERY_BROKER_URL: str = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/1')
@@ -71,6 +72,18 @@ class Settings:
     GOOGLE_SERVICE_ACCOUNT_JSON: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_JSON', '')
     
     @property
+    def firebase_service_account_info(self) -> dict:
+        """
+        Returns the parsed JSON content of the Google service account key,
+        or raises an error if it's missing or invalid.
+        """
+        if not self.FIREBASE_CREDENTIALS_JSON:
+            raise ValueError("FIREBASE_CREDENTIALS_JSON environment variable is not set")
+        try:
+            return json.loads(self.FIREBASE_CREDENTIALS_JSON)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON in FIREBASE_CREDENTIALS_JSON: {e}")
+    @property
     def google_service_account_info(self) -> dict:
         """
         Returns the parsed JSON content of the Google service account key,
@@ -79,7 +92,6 @@ class Settings:
         if not self.GOOGLE_SERVICE_ACCOUNT_JSON:
             raise ValueError("GOOGLE_SERVICE_ACCOUNT_JSON environment variable is not set")
         try:
-            import json
             return json.loads(self.GOOGLE_SERVICE_ACCOUNT_JSON)
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON in GOOGLE_SERVICE_ACCOUNT_JSON: {e}")
