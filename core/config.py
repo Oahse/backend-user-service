@@ -1,5 +1,5 @@
 import os
-from typing import Any, List, Literal
+from typing import Any, Optional, List, Literal
 from dotenv import load_dotenv
 
 # Load environment variables from .env file located in the parent directory
@@ -26,8 +26,20 @@ class Settings:
     ENVIRONMENT: Literal["local", "staging", "production"] = os.getenv('ENVIRONMENT', 'local')
 
     # Redis
-    REDIS_URL: str = os.getenv('REDIS_URL', 'redis://default:4kZH1STNfGDscS29dCdbU7nJMPrDLZfh@redis-10990.c52.us-east-1-4.ec2.redns.redis-cloud.com:10990')
+    REDIS_URL: str = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+    REDIS_CACHE_TTL: int = int(os.getenv('REDIS_CACHE_TTL', '3600'))  # default 3600 seconds (1 hour)
 
+    # SMS
+    SMS_API_KEY: Optional[str] = os.getenv('SMS_API_KEY')
+    SMS_API_URL: Optional[str] = os.getenv('SMS_API_URL')
+
+    # Push Notifications
+    FIREBASE_CREDENTIALS_PATH: Optional[str] = os.getenv('FIREBASE_CREDENTIALS_PATH')
+
+    # Celery
+    CELERY_BROKER_URL: str = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/1')
+    CELERY_RESULT_BACKEND: str = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/2')
+    
     # PostgreSQL
     POSTGRES_USER: str = os.getenv('POSTGRES_USER', 'postgres')
     POSTGRES_PASSWORD: str = os.getenv('POSTGRES_PASSWORD', 'postgres')
@@ -40,11 +52,37 @@ class Settings:
 
     # Security
     SECRET_KEY: str = os.getenv('SECRET_KEY', 'changeme-super-secret-key')
+    ALGORITHM: str = os.getenv('ALGORITHM', "HS256")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES', 30)
+    REFRESH_TOKEN_EXPIRE_DAYS: int = os.getenv('REFRESH_TOKEN_EXPIRE_DAYS', 7)
 
     # CORS
     RAW_CORS_ORIGINS: str = os.getenv('BACKEND_CORS_ORIGINS', '')
     BACKEND_CORS_ORIGINS: List[str] = parse_cors(RAW_CORS_ORIGINS)
 
+    SMTP_HOSTNAME: str = os.getenv('SMTP_HOSTNAME', '')
+    SMTP_USER: str = os.getenv('SMTP_USER', '')
+    SMTP_PASSWORD: str = os.getenv('SMTP_PASSWORD', '')
+
+    TELEGRAM_BOT_TOKEN: str = os.getenv('TELEGRAM_BOT_TOKEN', '')
+    WHATSAPP_ACCESS_TOKEN: str = os.getenv('WHATSAPP_ACCESS_TOKEN', '')
+    PHONE_NUMBER_ID: str = os.getenv('PHONE_NUMBER_ID', '')
+
+    GOOGLE_SERVICE_ACCOUNT_JSON: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_JSON', '')
+    
+    @property
+    def google_service_account_info(self) -> dict:
+        """
+        Returns the parsed JSON content of the Google service account key,
+        or raises an error if it's missing or invalid.
+        """
+        if not self.GOOGLE_SERVICE_ACCOUNT_JSON:
+            raise ValueError("GOOGLE_SERVICE_ACCOUNT_JSON environment variable is not set")
+        try:
+            import json
+            return json.loads(self.GOOGLE_SERVICE_ACCOUNT_JSON)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON in GOOGLE_SERVICE_ACCOUNT_JSON: {e}")
     @property
     def server_host(self) -> str:
         return f"http://{self.DOMAIN}" if self.ENVIRONMENT == "local" else f"https://{self.DOMAIN}"

@@ -1,38 +1,60 @@
 from redis import asyncio as aioredis
 from fastapi import FastAPI, Request
-from typing import List
+from contextlib import asynccontextmanager
 from core.config import Settings
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.cors import CORSMiddleware
-
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from routes.user import router as user_router
 from routes.address import router as address_router
-from core.utils.response import Response, RequestValidationError 
+from core.utils.response import Response, RequestValidationError
+from routes.email import router as email_router
+from routes.notification import router as notification_router
+from core.utils.messages import telegram
+from core.utils.redis import redis_client
+import asyncio
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan events."""
+    # Startup
+    asyncio.create_task(telegram.run_telegram_bot())
+    print("Bot is running...")
+    
+    await redis_client.connect()
+    
+    yield
+    
+    # Shutdown
+    await telegram.telegram_app.stop()
+    print("Bot stopped.")
+    await redis_client.disconnect()
 
 app = FastAPI(
     title="User Service API",
     description="Handles user authentication, management, and address operations.",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 settings = Settings()
 
-# Add CORS middleware if configured
 if settings.BACKEND_CORS_ORIGINS:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            str(origin).strip("/") for origin in settings.BACKEND_CORS_ORIGINS
-        ],
+        allow_origins=[str(origin).strip("/") for origin in settings.BACKEND_CORS_ORIGINS],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
-# Add session middleware
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=["localhost", "127.0.0.1", "*.banwee.com"]
+)
 
-        
-# Include the routers
+app.include_router(email_router)
+app.include_router(notification_router)
 app.include_router(user_router)
 app.include_router(address_router)
 
@@ -50,7 +72,6 @@ async def read_root():
         }
     }
 
-# Handle validation errors globally
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     errors = []
@@ -64,10 +85,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             e["ctx"] = error["ctx"]
         errors.append(e)
 
-    # If only one error, return as a single object
     message = errors[0] if len(errors) == 1 else errors
 
-
     return Response(message=message, success=False, code=422)
-
-

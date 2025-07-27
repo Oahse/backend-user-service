@@ -7,7 +7,7 @@ from core.utils.response import Response
 from schemas.user import AddressCreate, AddressUpdate, AddressRead
 from services.address import AddressService
 
-router = APIRouter(prefix='/api/v1', tags=["Addresses"])
+router = APIRouter(prefix='/api/v1/addresses', tags=["Addresses"])
 
 @router.post("/")
 async def create_address(address_in: AddressCreate, db: AsyncSession = Depends(get_db)):

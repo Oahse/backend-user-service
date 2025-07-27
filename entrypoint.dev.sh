@@ -14,8 +14,12 @@ success() { echo -e "${GREEN}[SUCCESS]${RESET} $1"; }
 error() { echo -e "${RED}[ERROR]${RESET} $1"; }
 warn() { echo -e "${YELLOW}[WARN]${RESET} $1"; }
 
+# Wait for Postgres (adjust host/port as needed)
 info "Waiting for users-db to be ready..."
-./wait-for-it.sh users-db:5432 --timeout=30 --strict -- sh -c 'echo "[INFO] Database is up"'
+./wait-for-it.sh users-db:5432 --timeout=30 --strict -- sh -c 'echo "[INFO] PostgreSQL Database is up"'
+
+# Wait for Redis
+./wait-for-it.sh redis:6379 --timeout=30 --strict -- sh -c 'echo "[INFO] Redis is up"'
 
 info "Making migration script executable..."
 chmod +x ./run_migrations.sh && success "Migration script made executable"
@@ -24,4 +28,4 @@ info "Running migration script..."
 ./run_migrations.sh
 
 info "Starting FastAPI server..."
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload --workers 2

@@ -18,7 +18,10 @@ curl -o wait-for-it.sh https://raw.githubusercontent.com/vishnubob/wait-for-it/m
 chmod +x wait-for-it.sh
 
 # Wait for users-db to be ready
-./wait-for-it.sh users-db:5432 --timeout=30 --strict -- info "Database is up"
+./wait-for-it.sh users-db:5432 --timeout=30 --strict -- sh -c 'echo "[INFO] PostgreSQL Database is up"'
+
+# Wait for Redis
+./wait-for-it.sh redis:6379 --timeout=30 --strict -- sh -c 'echo "[INFO] Redis is up"'
 
 info "Making migration script executable..."
 chmod +x ./run_migrations.sh && success "Migration script made executable"
@@ -27,4 +30,4 @@ info "Running migration script..."
 ./run_migrations.sh
 
 info "Starting Gunicorn server..."
-exec gunicorn main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000}
+exec gunicorn main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000}

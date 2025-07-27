@@ -2,12 +2,11 @@ from sqlalchemy.orm import mapped_column, Mapped, relationship, validates
 from sqlalchemy import Enum, Integer, String, DateTime, ForeignKey, Boolean, Text, BigInteger
 from core.database import Base, CHAR_LENGTH
 from core.utils.encryption import PasswordManager
-from core.utils.generator import generator
 from datetime import datetime
 from enum import Enum as PyEnum
 from typing import List, Optional
-from uuid import UUID
-
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
 
 class AddressType(PyEnum):
     Billing = "Billing"
@@ -16,7 +15,7 @@ class AddressType(PyEnum):
 class Address(Base):
     __tablename__ = "addresses"
 
-    id: Mapped[str] = mapped_column(String(CHAR_LENGTH), primary_key=True)
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
     user: Mapped["User"] = relationship("User", back_populates="addresses", uselist=False)
     
@@ -66,30 +65,29 @@ class UserGender(PyEnum):
 class User(Base):
     __tablename__ = "users"
     
-    id: Mapped[str] = mapped_column(String(CHAR_LENGTH), primary_key=True)
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     
-    firstname: Mapped[str] = mapped_column(String(CHAR_LENGTH))
-    lastname: Mapped[str] = mapped_column(String(CHAR_LENGTH))
-    password: Mapped[str] = mapped_column(Text, nullable=True)
+    firstname: Mapped[str] = mapped_column(String(CHAR_LENGTH), index=True)
+    lastname: Mapped[str] = mapped_column(String(CHAR_LENGTH), index=True)
+    password_hash: Mapped[str] = mapped_column(Text, nullable=True)
     email: Mapped[str] = mapped_column(String(CHAR_LENGTH), unique=True, index=True)
     picture: Mapped[str] = mapped_column(Text, nullable=True)
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), nullable=False)
+    verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
     
+    telegram: Mapped[str] = mapped_column(String(CHAR_LENGTH))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    active: Mapped[bool] = mapped_column(Boolean, default=False)
-    phone_number: Mapped[str] = mapped_column(String(CHAR_LENGTH), nullable=True)
-    phone_number_pre: Mapped[str] = mapped_column(String(CHAR_LENGTH), nullable=True)
-    age: Mapped[int] = mapped_column(Integer, nullable=False)
-    gender: Mapped[UserGender] = mapped_column(Enum(UserGender), nullable=False)
+    active: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    phone: Mapped[str] = mapped_column(String(CHAR_LENGTH), nullable=True, index=True)
+    age: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    gender: Mapped[UserGender] = mapped_column(Enum(UserGender), nullable=False, index=True)
     
     addresses: Mapped[List[Address]] = relationship(
         "Address", back_populates="user", cascade="all, delete-orphan", uselist=True, lazy="joined", passive_deletes=True
     )
 
-    access_token: Mapped[str] = mapped_column(Text, nullable=True)
-    refresh_token: Mapped[str] = mapped_column(Text, nullable=True)
     activation_token: Mapped[Optional[str]] = mapped_column(String(CHAR_LENGTH), nullable=True)
     activation_token_expires: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
@@ -115,17 +113,24 @@ class User(Base):
             "email": self.email,
             "picture": self.picture,
             "role": self.role.value,
+            "verified": self.verified,
             "active": self.active,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
-            "phone_number": self.phone_number,
-            "phone_number_pre": self.phone_number_pre,
+            "phone": self.phone,
             "gender": self.gender.value,
             "age": self.age,
-            "addresses": [address.to_dict() for address in self.addresses],
-            "access_token": self.access_token,
-            "refresh_token": self.refresh_token
+            "addresses": [address.to_dict() for address in self.addresses]
         }
 
     def __repr__(self) -> str:
         return f"User(id={self.id!r}, firstname={self.firstname!r}, lastname={self.lastname!r}, role={self.role!r})"
+
+class EmailChangeRequestModel(Base):
+    __tablename__ = "email_change_requests"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    new_email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    token: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    expires_at: Mapped["datetime"] = mapped_column(DateTime, nullable=False)

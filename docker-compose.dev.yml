@@ -1,22 +1,18 @@
+version: "3.9"
 
 services:
-  kafka:
-    image: bitnami/kafka:3.8.0
-    container_name: kafka
-    environment:
-      - KAFKA_CFG_NODE_ID=0
-      - KAFKA_CFG_PROCESS_ROLES=controller,broker
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
-      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
-    restart: always
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
     networks:
       - webnet
-    ports:
-      - "9092:9092"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       retries: 5
       timeout: 10s
@@ -29,12 +25,11 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: users_db
-    
     volumes:
       - users-db-data:/var/lib/postgresql/data
-
+    restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "5432:5432"  # optional in dev
     networks:
       - webnet
     healthcheck:
@@ -48,9 +43,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     container_name: userservice
     depends_on:
-      kafka:
+      redis:
         condition: service_healthy
       users-db:
         condition: service_healthy
@@ -59,12 +55,55 @@ services:
     networks:
       - webnet
     volumes:
-      - .:/usr/src/app
+      - .:/usr/src/app  # live code changes
     env_file:
       - .env
     working_dir: /usr/src/app
-    restart: always
+    restart: unless-stopped
 
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: celery_worker
+    command: celery -A tasks worker --loglevel=info
+    depends_on:
+      redis:
+        condition: service_healthy
+      users-db:
+        condition: service_healthy
+    volumes:
+      - .:/usr/src/app  # live code changes
+    env_file:
+      - .env
+    working_dir: /usr/src/app
+    restart: unless-stopped
+
+  flower:
+    image: mher/flower
+    container_name: flower
+    restart: unless-stopped
+    ports:
+      - "5555:5555"
+    command: flower --broker=${CELERY_BROKER_URL}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - webnet
+
+  # Optional nginx in dev, usually unnecessary unless you want to test routing
+  # nginx:
+  #   image: nginx:alpine
+  #   ports:
+  #     - "80:80"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf
+  #   depends_on:
+  #     - userservice
+  #   restart: unless-stopped
+  #   networks:
+  #     - webnet
 
 networks:
   webnet:
@@ -72,4 +111,4 @@ networks:
 
 volumes:
   users-db-data:
-    external: false
+  redis-data:

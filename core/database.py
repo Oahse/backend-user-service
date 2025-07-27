@@ -10,8 +10,8 @@ CHAR_LENGTH=255
 
 # Database engine
 SQLALCHEMY_DATABASE_URL = str(settings.SQLALCHEMY_DATABASE_URI) 
-print(SQLALCHEMY_DATABASE_URL,'------')
-print(str(settings.ENVIRONMENT),'environment')
+# print(SQLALCHEMY_DATABASE_URL,'------')
+# print(str(settings.ENVIRONMENT),'environment')
 
 engine_db = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True)
 
@@ -19,7 +19,8 @@ engine_db = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True)
 AsyncSessionDB = sessionmaker(
     bind=engine_db, 
     class_=AsyncSession, 
-    expire_on_commit=False, 
+    expire_on_commit=True, 
+    pool_pre_ping=True  # ensures connection is alive before use
 )
 
 
