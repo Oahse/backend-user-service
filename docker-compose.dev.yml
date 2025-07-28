@@ -42,7 +42,7 @@ services:
   userservice:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: ./backend/Dockerfile.dev
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     container_name: userservice
     depends_on:
@@ -55,7 +55,7 @@ services:
     networks:
       - webnet
     volumes:
-      - .:/usr/src/app  # live code changes
+      - ./backend:/usr/src/app  # live code changes
     env_file:
       - .env
     working_dir: /usr/src/app
@@ -64,7 +64,7 @@ services:
   celery_worker:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: ./backend/Dockerfile.dev
     container_name: celery_worker
     command: celery -A tasks worker --loglevel=info
     depends_on:
@@ -73,7 +73,7 @@ services:
       users-db:
         condition: service_healthy
     volumes:
-      - .:/usr/src/app  # live code changes
+      - ./backend:/usr/src/app  # live code changes
     env_file:
       - .env
     working_dir: /usr/src/app
@@ -104,6 +104,14 @@ services:
   #   restart: unless-stopped
   #   networks:
   #     - webnet
+  frontend:
+    build:
+      context: ./frontend
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "5173:5173"
+    command: ["npm", "run", "dev"]
 
 networks:
   webnet:

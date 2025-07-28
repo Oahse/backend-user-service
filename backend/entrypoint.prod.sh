@@ -29,5 +29,6 @@ chmod +x ./run_migrations.sh && success "Migration script made executable"
 info "Running migration script..."
 ./run_migrations.sh
 
-info "Starting Gunicorn server..."
-exec gunicorn main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000}
+info "Starting server..."
+# Start app
+exec uvicorn main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips="*"

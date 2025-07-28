@@ -96,8 +96,9 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/letsencrypt
+      - ./nginx/www:/var/www/html
     depends_on:
       - userservice
     networks:
@@ -105,6 +106,29 @@ services:
     restart: unless-stopped
     profiles:
       - production
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./nginx/ssl:/etc/letsencrypt
+      - ./nginx/www:/var/www/html
+    entrypoint: >
+      sh -c "
+        certbot certonly --webroot -w /var/www/html \
+        --email ${CERTBOT_EMAIL} --agree-tos --no-eff-email \
+        -d ${DOMAIN_NAME} && nginx -s reload
+      "
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend
+    networks:
+      - webnet
+    expose:
+      - "80"
+    restart: unless-stopped
+
 
 networks:
   webnet:
