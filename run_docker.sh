@@ -59,6 +59,7 @@ create_network_and_volume() {
     docker network create webnet 2>/dev/null || echo "Network 'webnet' already exists or failed to create"
     # Uncomment and customize these if needed
     docker volume create users-db-data 2>/dev/null || echo "Volume 'users-db-data' already exists or failed to create"
+    docker volume create redis-data 2>/dev/null || echo "Volume 'users-db-data' already exists or failed to create"
 }
 
 # Function to start containers

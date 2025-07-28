@@ -20,11 +20,11 @@ class Address(Base):
     user: Mapped["User"] = relationship("User", back_populates="addresses", uselist=False)
     
     street: Mapped[str] = mapped_column(String(CHAR_LENGTH), nullable=True)
-    city: Mapped[str] = mapped_column(String(CHAR_LENGTH), nullable=True)
-    state: Mapped[str] = mapped_column(String(CHAR_LENGTH), nullable=True)
-    country: Mapped[str] = mapped_column(String(CHAR_LENGTH), nullable=True)
-    post_code: Mapped[str] = mapped_column(String(CHAR_LENGTH), nullable=True)
-    kind: Mapped[AddressType] = mapped_column(Enum(AddressType), nullable=False)
+    city: Mapped[str] = mapped_column(String(CHAR_LENGTH), nullable=True, index=True)
+    state: Mapped[str] = mapped_column(String(CHAR_LENGTH), nullable=True, index=True)
+    country: Mapped[str] = mapped_column(String(CHAR_LENGTH), nullable=True, index=True)
+    post_code: Mapped[str] = mapped_column(String(CHAR_LENGTH), nullable=True, index=True)
+    kind: Mapped[AddressType] = mapped_column(Enum(AddressType), nullable=False, index=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -72,12 +72,12 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(Text, nullable=True)
     email: Mapped[str] = mapped_column(String(CHAR_LENGTH), unique=True, index=True)
     picture: Mapped[str] = mapped_column(Text, nullable=True)
-    role: Mapped[UserRole] = mapped_column(Enum(UserRole), nullable=False)
+    role: Mapped[UserRole] = mapped_column(Enum(UserRole), nullable=False, index=True)
     verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
     
     telegram: Mapped[str] = mapped_column(String(CHAR_LENGTH))
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, index=True)
     
     active: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     phone: Mapped[str] = mapped_column(String(CHAR_LENGTH), nullable=True, index=True)
