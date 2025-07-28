@@ -4,8 +4,6 @@ services:
   redis:
     image: redis:7-alpine
     container_name: redis
-    ports:
-      - "6379:6379"
     networks:
       - webnet
     volumes:
@@ -28,8 +26,6 @@ services:
     volumes:
       - users-db-data:/var/lib/postgresql/data
     restart: unless-stopped
-    ports:
-      - "5432:5432"
     networks:
       - webnet
     healthcheck:
@@ -42,26 +38,37 @@ services:
   userservice:
     build:
       context: .
-      dockerfile: Dockerfile.prod  # Use production Dockerfile here
-    command: uvicorn main:app --host 0.0.0.0 --port 8000  # No --reload in prod
+      dockerfile: ./backend/Dockerfile.prod
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
     container_name: userservice
     depends_on:
       redis:
         condition: service_healthy
       users-db:
         condition: service_healthy
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     networks:
       - webnet
     env_file:
-      - .env
+      - .env.production
     restart: unless-stopped
+    environment:
+      - POSTGRES_SERVER=users-db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   celery_worker:
     build:
       context: .
-      dockerfile: Dockerfile.prod  # Also production Dockerfile for celery worker
+      dockerfile: ./backend/Dockerfile.prod
     container_name: celery_worker
     command: celery -A tasks worker --loglevel=info
     depends_on:
@@ -72,22 +79,45 @@ services:
     networks:
       - webnet
     env_file:
-      - .env
+      - .env.production
     restart: unless-stopped
+    environment:
+      - POSTGRES_SERVER=users-db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
 
   flower:
     image: mher/flower
     container_name: flower
     restart: unless-stopped
-    ports:
-      - "5555:5555"
-    command: >
-      flower --broker=${CELERY_BROKER_URL}
+    expose:
+      - "5555"
+    command: flower --broker=redis://redis:6379/1
     depends_on:
       redis:
         condition: service_healthy
     networks:
       - webnet
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/1
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: frontend
+    networks:
+      - webnet
+    expose:
+      - "80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   nginx:
     image: nginx:alpine
@@ -96,16 +126,24 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/letsencrypt
+      - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/letsencrypt:ro
       - ./nginx/www:/var/www/html
+      - nginx-cache:/var/cache/nginx
     depends_on:
-      - userservice
+      userservice:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
     networks:
       - webnet
     restart: unless-stopped
-    profiles:
-      - production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   certbot:
     image: certbot/certbot
@@ -113,21 +151,18 @@ services:
     volumes:
       - ./nginx/ssl:/etc/letsencrypt
       - ./nginx/www:/var/www/html
-    entrypoint: >
-      sh -c "
-        certbot certonly --webroot -w /var/www/html \
-        --email ${CERTBOT_EMAIL} --agree-tos --no-eff-email \
-        -d ${DOMAIN_NAME} && nginx -s reload
-      "
-  frontend:
-    build:
-      context: ./frontend
-    container_name: frontend
     networks:
       - webnet
-    expose:
-      - "80"
-    restart: unless-stopped
+    profiles:
+      - ssl
+    command: >
+      sh -c "
+        trap exit TERM;
+        while :; do
+          certbot renew --webroot -w /var/www/html;
+          sleep 12h & wait $${!};
+        done;
+      "
 
 
 networks:
@@ -137,3 +172,4 @@ networks:
 volumes:
   users-db-data:
   redis-data:
+  nginx-cache:

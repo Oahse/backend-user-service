@@ -72,6 +72,27 @@ async def read_root():
         }
     }
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Docker health checks and monitoring."""
+    try:
+        # Test Redis connection
+        await redis_client.ping()
+        return {
+            "status": "healthy",
+            "service": "User Service API",
+            "version": "1.0.0",
+            "redis": "connected"
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "service": "User Service API",
+            "version": "1.0.0",
+            "redis": "disconnected",
+            "error": str(e)
+        }
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     errors = []

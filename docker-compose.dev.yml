@@ -56,10 +56,16 @@ services:
       - webnet
     volumes:
       - ./backend:/usr/src/app  # live code changes
+      - /usr/src/app/__pycache__  # exclude pycache from volume mount
     env_file:
-      - .env
+      - .env.local
     working_dir: /usr/src/app
     restart: unless-stopped
+    environment:
+      - POSTGRES_SERVER=users-db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
 
   celery_worker:
     build:
@@ -74,10 +80,18 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/usr/src/app  # live code changes
+      - /usr/src/app/__pycache__  # exclude pycache from volume mount
     env_file:
-      - .env
+      - .env.local
     working_dir: /usr/src/app
     restart: unless-stopped
+    networks:
+      - webnet
+    environment:
+      - POSTGRES_SERVER=users-db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
 
   flower:
     image: mher/flower
@@ -85,33 +99,31 @@ services:
     restart: unless-stopped
     ports:
       - "5555:5555"
-    command: flower --broker=${CELERY_BROKER_URL}
+    command: flower --broker=redis://redis:6379/1
     depends_on:
       redis:
         condition: service_healthy
     networks:
       - webnet
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/1
 
-  # Optional nginx in dev, usually unnecessary unless you want to test routing
-  # nginx:
-  #   image: nginx:alpine
-  #   ports:
-  #     - "80:80"
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/nginx.conf
-  #   depends_on:
-  #     - userservice
-  #   restart: unless-stopped
-  #   networks:
-  #     - webnet
   frontend:
     build:
       context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: frontend
     volumes:
       - ./frontend:/app
+      - /app/node_modules  # prevent node_modules from being overwritten
     ports:
       - "5173:5173"
-    command: ["npm", "run", "dev"]
+    networks:
+      - webnet
+    restart: unless-stopped
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
 networks:
   webnet:

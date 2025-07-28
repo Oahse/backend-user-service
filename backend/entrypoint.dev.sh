@@ -16,10 +16,10 @@ warn() { echo -e "${YELLOW}[WARN]${RESET} $1"; }
 
 # Wait for Postgres (adjust host/port as needed)
 info "Waiting for users-db to be ready..."
-./wait-for-it.sh users-db:5432 --timeout=30 --strict -- sh -c 'echo "[INFO] PostgreSQL Database is up"'
+wait-for-it.sh users-db:5432 --timeout=30 --strict -- sh -c 'echo "[INFO] PostgreSQL Database is up"'
 
 # Wait for Redis
-./wait-for-it.sh redis:6379 --timeout=30 --strict -- sh -c 'echo "[INFO] Redis is up"'
+wait-for-it.sh redis:6379 --timeout=30 --strict -- sh -c 'echo "[INFO] Redis is up"'
 
 info "Making migration script executable..."
 chmod +x ./run_migrations.sh && success "Migration script made executable"
