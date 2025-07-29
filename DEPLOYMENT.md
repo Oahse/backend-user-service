@@ -9,8 +9,11 @@ This guide provides comprehensive instructions for deploying the full-stack appl
 - [Development Environment](#development-environment)
 - [Production Environment](#production-environment)
 - [Environment Configuration](#environment-configuration)
+- [Testing and Validation](#testing-and-validation)
+- [Deployment Script Usage](#deployment-script-usage)
 - [Troubleshooting](#troubleshooting)
 - [Common Issues](#common-issues)
+- [Environment-Specific Examples](#environment-specific-examples)
 - [Maintenance](#maintenance)
 
 ## Prerequisites
@@ -170,6 +173,248 @@ nginx/ssl/prod/privkey.pem      # Private key
 certbot certonly --webroot -w /var/www/certbot -d yourdomain.com
 cp /etc/letsencrypt/live/yourdomain.com/fullchain.pem nginx/ssl/prod/
 cp /etc/letsencrypt/live/yourdomain.com/privkey.pem nginx/ssl/prod/
+```
+
+## Testing and Validation
+
+### Development Environment Testing
+
+Before deploying to production, thoroughly test the development environment to ensure all components work correctly.
+
+#### Automated Testing Script
+
+The project includes automated testing scripts for both environments:
+
+```bash
+# Test development environment
+./test_dev_environment.sh
+
+# Test production environment  
+./test_prod_environment.sh
+```
+
+#### Manual Development Testing Steps
+
+1. **Start Development Environment**
+   ```bash
+   ./run_docker.sh dev up
+   ```
+
+2. **Verify Service Accessibility**
+   ```bash
+   # Test frontend
+   curl -f http://localhost:5173 || echo "Frontend not accessible"
+   
+   # Test backend API
+   curl -f http://localhost:8000/api/v1/health || echo "Backend API not accessible"
+   
+   # Test API documentation
+   curl -f http://localhost:8000/docs || echo "API docs not accessible"
+   
+   # Test Celery monitoring
+   curl -f http://localhost:5555 || echo "Flower not accessible"
+   ```
+
+3. **Test Hot Reloading**
+   ```bash
+   # Make a change to frontend code
+   echo "console.log('Test change');" >> frontend/src/App.jsx
+   
+   # Make a change to backend code
+   echo "# Test comment" >> backend/main.py
+   
+   # Verify changes are reflected without restart
+   ```
+
+4. **Test Database Connectivity**
+   ```bash
+   # Connect to database
+   docker compose -f docker-compose.dev.yml exec users-db psql -U postgres -d app -c "\dt"
+   
+   # Test backend database connection
+   docker compose -f docker-compose.dev.yml exec userservice python -c "from core.database import engine; print('DB Connected:', engine.url)"
+   ```
+
+5. **Test Redis Connectivity**
+   ```bash
+   # Test Redis connection
+   docker compose -f docker-compose.dev.yml exec redis redis-cli ping
+   
+   # Test backend Redis connection
+   docker compose -f docker-compose.dev.yml exec userservice python -c "import redis; r=redis.from_url('redis://redis:6379/0'); print('Redis Connected:', r.ping())"
+   ```
+
+### Production Environment Testing
+
+Production testing ensures the nginx reverse proxy, SSL configuration, and optimized builds work correctly.
+
+#### Manual Production Testing Steps
+
+1. **Start Production Environment**
+   ```bash
+   ./run_docker.sh prod up
+   ```
+
+2. **Test nginx Reverse Proxy**
+   ```bash
+   # Test frontend serving through nginx
+   curl -f http://localhost/ || echo "Frontend not accessible through nginx"
+   
+   # Test API routing through nginx
+   curl -f http://localhost/api/v1/health || echo "API not accessible through nginx"
+   
+   # Test static file serving
+   curl -f http://localhost/assets/ || echo "Static assets not accessible"
+   ```
+
+3. **Test SSL Configuration (if configured)**
+   ```bash
+   # Test HTTPS redirect
+   curl -I http://localhost/ | grep -i location
+   
+   # Test SSL certificate
+   openssl s_client -connect localhost:443 -servername yourdomain.com < /dev/null
+   ```
+
+4. **Test Security Headers**
+   ```bash
+   # Check security headers
+   curl -I http://localhost/ | grep -E "(X-Frame-Options|X-Content-Type-Options|Strict-Transport-Security)"
+   ```
+
+5. **Test Rate Limiting**
+   ```bash
+   # Test API rate limiting (adjust based on your limits)
+   for i in {1..100}; do curl -s http://localhost/api/v1/health; done
+   ```
+
+6. **Performance Testing**
+   ```bash
+   # Test frontend load time
+   time curl -s http://localhost/ > /dev/null
+   
+   # Test API response time
+   time curl -s http://localhost/api/v1/health > /dev/null
+   ```
+
+### Validation Checklist
+
+#### Development Environment Validation
+- [ ] All services start successfully
+- [ ] Frontend accessible on port 5173
+- [ ] Backend API accessible on port 8000
+- [ ] API documentation accessible
+- [ ] Hot reloading works for frontend
+- [ ] Hot reloading works for backend
+- [ ] Database connections work
+- [ ] Redis connections work
+- [ ] Celery worker processes tasks
+- [ ] Flower monitoring accessible
+
+#### Production Environment Validation
+- [ ] All services start successfully
+- [ ] nginx serves frontend correctly
+- [ ] nginx proxies API requests correctly
+- [ ] Static files served with proper caching
+- [ ] SSL/HTTPS works (if configured)
+- [ ] Security headers present
+- [ ] Rate limiting functional
+- [ ] Database connections work
+- [ ] Redis connections work
+- [ ] Celery worker processes tasks
+- [ ] Performance meets requirements
+
+## Deployment Script Usage
+
+The `run_docker.sh` script is the primary tool for managing the application lifecycle. It provides comprehensive error handling, validation, and status reporting.
+
+### Script Features
+
+- **Environment Validation**: Checks Docker installation and versions
+- **Prerequisite Checking**: Validates required files and configurations
+- **Error Handling**: Comprehensive error reporting with colored output
+- **Logging**: All operations logged to `deployment.log`
+- **Status Reporting**: Clear status messages and progress indicators
+
+### Basic Usage
+
+```bash
+# General syntax
+./run_docker.sh <environment> <command> [options]
+
+# Environment options
+dev     # Development environment
+prod    # Production environment
+
+# Command options
+up      # Start services
+down    # Stop services
+restart # Restart services
+logs    # Show service logs
+status  # Show service status
+clean   # Clean up containers and images
+```
+
+### Advanced Usage Examples
+
+```bash
+# Start development with verbose output
+./run_docker.sh dev up -v
+
+# Stop production and remove all containers/images/volumes
+./run_docker.sh prod down delete -f
+
+# Check status of development environment
+./run_docker.sh dev status
+
+# View logs for production environment
+./run_docker.sh prod logs
+
+# Clean up development environment without confirmation
+./run_docker.sh dev clean -f
+
+# Restart production environment
+./run_docker.sh prod restart
+```
+
+### Script Validation Process
+
+The script performs the following validations before executing commands:
+
+1. **System Prerequisites**
+   - Docker Engine version (minimum 20.10)
+   - Docker Compose version (minimum 2.0)
+   - Docker daemon running status
+
+2. **File Validation**
+   - Environment files exist and are readable
+   - Docker Compose files exist and have valid syntax
+   - Required environment variables present
+
+3. **Permission Checks**
+   - Script executable permissions
+   - Environment file permissions
+   - Backend script permissions
+
+4. **Network and Volume Setup**
+   - Docker network creation
+   - Volume creation and validation
+
+### Error Handling
+
+The script provides detailed error messages and suggestions:
+
+```bash
+# Example error output
+✗ Error: Environment file '.env.local' not found
+ℹ Info: Please create the environment file with required configuration
+
+✗ Error: Docker version 19.03 is too old. Minimum required: 20.10
+ℹ Info: Visit: https://docs.docker.com/engine/install/
+
+✗ Error: Missing required environment variables in .env.local:
+  ✗ POSTGRES_PASSWORD
+  ✗ SECRET_KEY
 ```
 
 ## Environment Configuration
@@ -469,6 +714,420 @@ services:
 # Clean up unused Docker resources
 docker system prune -a
 docker volume prune
+```
+
+### Issue 7: Deployment Script Failures
+
+**Symptoms**: run_docker.sh script fails with validation errors
+
+**Solution**:
+```bash
+# Check script permissions
+chmod +x run_docker.sh
+
+# Verify Docker installation
+docker --version
+docker compose version
+
+# Check environment file exists
+ls -la .env.local .env.production
+
+# Validate Docker Compose syntax
+docker compose -f docker-compose.dev.yml config
+docker compose -f docker-compose.prod.yml config
+
+# Check deployment logs
+tail -f deployment.log
+```
+
+### Issue 8: Environment Variable Issues
+
+**Symptoms**: Services fail to start due to missing or incorrect environment variables
+
+**Solution**:
+```bash
+# Validate environment file content
+grep -E "^[A-Z_]+=.+" .env.local | wc -l  # Should show number of variables
+
+# Check for missing required variables
+required_vars=("POSTGRES_USER" "POSTGRES_PASSWORD" "SECRET_KEY" "REDIS_URL")
+for var in "${required_vars[@]}"; do
+    grep -q "^${var}=" .env.local || echo "Missing: $var"
+done
+
+# Verify environment file is copied correctly
+ls -la .env
+cat .env | head -5  # Check first few lines
+
+# Test environment variable loading
+docker compose -f docker-compose.dev.yml exec userservice env | grep POSTGRES
+```
+
+### Issue 9: Service Health Check Failures
+
+**Symptoms**: Services fail health checks and don't start properly
+
+**Solution**:
+```bash
+# Check service health status
+docker compose ps
+
+# View health check logs
+docker compose logs users-db | grep health
+docker compose logs redis | grep health
+
+# Manually test health checks
+docker compose exec users-db pg_isready -U postgres
+docker compose exec redis redis-cli ping
+
+# Increase health check timeout (in docker-compose.yml)
+healthcheck:
+  test: ["CMD", "pg_isready", "-U", "postgres"]
+  interval: 10s
+  timeout: 10s
+  retries: 5
+  start_period: 30s
+```
+
+### Issue 10: Testing Script Failures
+
+**Symptoms**: Automated testing scripts fail or return false positives
+
+**Solution**:
+```bash
+# Run tests with verbose output
+bash -x ./test_dev_environment.sh
+
+# Check individual test components
+curl -v http://localhost:5173
+curl -v http://localhost:8000/api/v1/health
+
+# Verify service readiness before testing
+docker compose ps | grep -E "(healthy|Up)"
+
+# Wait for services to be fully ready
+sleep 30 && ./test_dev_environment.sh
+
+# Check test script permissions
+chmod +x test_dev_environment.sh test_prod_environment.sh
+```
+
+## Environment-Specific Examples
+
+### Development Environment Complete Setup
+
+This section provides complete, working examples for setting up the development environment from scratch.
+
+#### Development Environment File (.env.local)
+
+```bash
+# Development Environment Configuration
+ENVIRONMENT=development
+DEBUG=true
+
+# Database Configuration
+POSTGRES_SERVER=users-db
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=devpassword123
+POSTGRES_DB=app
+DATABASE_URL=postgresql://postgres:devpassword123@users-db:5432/app
+
+# Redis Configuration
+REDIS_URL=redis://redis:6379/0
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+# Backend Configuration
+SECRET_KEY=dev-secret-key-change-in-production-12345
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+BACKEND_CORS_ORIGINS=["http://localhost:5173","http://localhost:3000","http://127.0.0.1:5173"]
+
+# Email Configuration (optional for development)
+SMTP_TLS=true
+SMTP_PORT=587
+SMTP_HOST=smtp.gmail.com
+SMTP_USER=your-dev-email@gmail.com
+SMTP_PASSWORD=your-app-password
+
+# Frontend Configuration
+VITE_API_URL=http://localhost:8000
+VITE_APP_TITLE=Development App
+
+# Development-specific settings
+PYTHONPATH=/usr/src/app
+PYTHONDONTWRITEBYTECODE=1
+PYTHONUNBUFFERED=1
+```
+
+#### Development Docker Compose Configuration
+
+Key aspects of the development setup:
+
+```yaml
+# docker-compose.dev.yml (key sections)
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+
+  userservice:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/usr/src/app
+    depends_on:
+      users-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+```
+
+#### Development Testing Commands
+
+```bash
+# Complete development environment test
+./run_docker.sh dev up
+
+# Wait for services to be ready
+sleep 30
+
+# Test all endpoints
+echo "Testing frontend..."
+curl -f http://localhost:5173 && echo "✓ Frontend OK" || echo "✗ Frontend Failed"
+
+echo "Testing backend API..."
+curl -f http://localhost:8000/api/v1/health && echo "✓ Backend OK" || echo "✗ Backend Failed"
+
+echo "Testing API documentation..."
+curl -f http://localhost:8000/docs && echo "✓ API Docs OK" || echo "✗ API Docs Failed"
+
+echo "Testing Celery monitoring..."
+curl -f http://localhost:5555 && echo "✓ Flower OK" || echo "✗ Flower Failed"
+
+# Test database connectivity
+docker compose -f docker-compose.dev.yml exec userservice python -c "
+from core.database import engine
+try:
+    with engine.connect() as conn:
+        result = conn.execute('SELECT 1')
+        print('✓ Database connection OK')
+except Exception as e:
+    print(f'✗ Database connection failed: {e}')
+"
+
+# Test Redis connectivity
+docker compose -f docker-compose.dev.yml exec userservice python -c "
+import redis
+try:
+    r = redis.from_url('redis://redis:6379/0')
+    r.ping()
+    print('✓ Redis connection OK')
+except Exception as e:
+    print(f'✗ Redis connection failed: {e}')
+"
+```
+
+### Production Environment Complete Setup
+
+#### Production Environment File (.env.production)
+
+```bash
+# Production Environment Configuration
+ENVIRONMENT=production
+DEBUG=false
+
+# Database Configuration
+POSTGRES_SERVER=users-db
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=secure-production-password-123!
+POSTGRES_DB=app
+DATABASE_URL=postgresql://postgres:secure-production-password-123!@users-db:5432/app
+
+# Redis Configuration
+REDIS_URL=redis://redis:6379/0
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+# Backend Configuration
+SECRET_KEY=super-secure-production-secret-key-change-this-12345
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+BACKEND_CORS_ORIGINS=["https://yourdomain.com","https://www.yourdomain.com"]
+
+# Email Configuration
+SMTP_TLS=true
+SMTP_PORT=587
+SMTP_HOST=smtp.gmail.com
+SMTP_USER=your-production-email@gmail.com
+SMTP_PASSWORD=your-production-app-password
+
+# Frontend Configuration
+VITE_API_URL=https://yourdomain.com/api/v1
+VITE_APP_TITLE=Production App
+
+# SSL Configuration
+SSL_CERT_PATH=/etc/nginx/ssl/fullchain.pem
+SSL_KEY_PATH=/etc/nginx/ssl/privkey.pem
+
+# Security Settings
+SECURE_COOKIES=true
+HTTPS_ONLY=true
+
+# Production-specific settings
+PYTHONPATH=/usr/src/app
+PYTHONDONTWRITEBYTECODE=1
+PYTHONUNBUFFERED=1
+```
+
+#### Production nginx Configuration
+
+```nginx
+# nginx/conf.d/prod.conf (example)
+upstream backend {
+    server userservice:8000;
+}
+
+server {
+    listen 80;
+    server_name yourdomain.com www.yourdomain.com;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name yourdomain.com www.yourdomain.com;
+
+    ssl_certificate /etc/nginx/ssl/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    # Frontend static files
+    location / {
+        root /usr/share/nginx/html;
+        try_files $uri $uri/ /index.html;
+        
+        # Cache static assets
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+    }
+
+    # API proxy
+    location /api/v1/ {
+        proxy_pass http://backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Rate limiting
+        limit_req zone=api burst=20 nodelay;
+    }
+
+    # Flower monitoring (restrict access in production)
+    location /flower/ {
+        proxy_pass http://flower:5555/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        
+        # Basic auth for production
+        auth_basic "Restricted";
+        auth_basic_user_file /etc/nginx/.htpasswd;
+    }
+}
+```
+
+#### Production Testing Commands
+
+```bash
+# Complete production environment test
+./run_docker.sh prod up
+
+# Wait for services to be ready
+sleep 60
+
+# Test nginx reverse proxy
+echo "Testing frontend through nginx..."
+curl -f http://localhost/ && echo "✓ Frontend through nginx OK" || echo "✗ Frontend through nginx Failed"
+
+echo "Testing API through nginx..."
+curl -f http://localhost/api/v1/health && echo "✓ API through nginx OK" || echo "✗ API through nginx Failed"
+
+# Test SSL (if configured)
+echo "Testing HTTPS redirect..."
+curl -I http://localhost/ | grep -q "301\|302" && echo "✓ HTTPS redirect OK" || echo "✗ HTTPS redirect Failed"
+
+# Test security headers
+echo "Testing security headers..."
+curl -I http://localhost/ | grep -q "X-Frame-Options" && echo "✓ Security headers OK" || echo "✗ Security headers Failed"
+
+# Test static file caching
+echo "Testing static file caching..."
+curl -I http://localhost/assets/index.js | grep -q "Cache-Control" && echo "✓ Static caching OK" || echo "✗ Static caching Failed"
+
+# Performance test
+echo "Testing response times..."
+time curl -s http://localhost/ > /dev/null && echo "✓ Frontend response time acceptable"
+time curl -s http://localhost/api/v1/health > /dev/null && echo "✓ API response time acceptable"
+```
+
+### Environment Switching
+
+#### Switching from Development to Production
+
+```bash
+# Stop development environment
+./run_docker.sh dev down
+
+# Clean up development resources (optional)
+./run_docker.sh dev clean delete -f
+
+# Start production environment
+./run_docker.sh prod up
+
+# Verify production is running
+./run_docker.sh prod status
+```
+
+#### Switching from Production to Development
+
+```bash
+# Stop production environment
+./run_docker.sh prod down
+
+# Start development environment
+./run_docker.sh dev up
+
+# Verify development is running
+./run_docker.sh dev status
+```
+
+### Database Migration Between Environments
+
+```bash
+# Export data from development
+docker compose -f docker-compose.dev.yml exec users-db pg_dump -U postgres app > dev_backup.sql
+
+# Import data to production (be careful!)
+docker compose -f docker-compose.prod.yml exec -T users-db psql -U postgres app < dev_backup.sql
 ```
 
 ## Maintenance
