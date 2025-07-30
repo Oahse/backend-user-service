@@ -329,7 +329,6 @@ validate_environment_files() {
 # Function to copy environment file with proper error handling
 copy_environment_file() {
     local source_file=""
-    local backup_file="${ENV_TARGET}.backup.$(date +%Y%m%d_%H%M%S)"
     
     case "$ENVIRONMENT" in
         dev)
@@ -342,14 +341,6 @@ copy_environment_file() {
     
     print_info "Preparing environment configuration for $ENVIRONMENT..."
     
-    # Backup existing .env file if it exists
-    if [[ -f "$ENV_TARGET" ]]; then
-        if cp "$ENV_TARGET" "$backup_file" 2>/dev/null; then
-            print_info "Existing .env backed up as $backup_file"
-        else
-            print_warning "Failed to backup existing .env file"
-        fi
-    fi
     
     # Copy the appropriate environment file
     if cp "$source_file" "$ENV_TARGET" 2>/dev/null; then
@@ -598,7 +589,6 @@ show_access_info() {
             echo -e "  ${CYAN}Frontend:${NC} http://localhost:5173"
             echo -e "  ${CYAN}Backend API:${NC} http://localhost:8000"
             echo -e "  ${CYAN}API Docs:${NC} http://localhost:8000/docs"
-            echo -e "  ${CYAN}Flower (Celery):${NC} http://localhost:5555"
             ;;
         prod)
             echo -e "  ${CYAN}Application:${NC} https://banwee.com (or your configured domain)"

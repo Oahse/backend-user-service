@@ -2,7 +2,11 @@ import os
 from typing import Any, Optional, List, Literal
 from dotenv import load_dotenv
 import json
-            
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Load environment variables from .env file located in the parent directory
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 ENV_PATH = os.path.join(BASE_DIR, '.env.production')
@@ -69,7 +73,30 @@ class Settings:
     WHATSAPP_ACCESS_TOKEN: str = os.getenv('WHATSAPP_ACCESS_TOKEN', '')
     PHONE_NUMBER_ID: str = os.getenv('PHONE_NUMBER_ID', '')
 
-    GOOGLE_SERVICE_ACCOUNT_JSON: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_JSON', '')
+    GOOGLE_SERVICE_ACCOUNT_TYPE: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_TYPE', '')
+    GOOGLE_SERVICE_ACCOUNT_PROJECT: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_PROJECT', '')
+    GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY_ID: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY_ID', '')
+    GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY', '')
+    GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL', '')
+    GOOGLE_SERVICE_ACCOUNT_CLIENT_ID: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_CLIENT_ID', '')
+
+    @property
+    def google_service_account_info(self) -> dict:
+        """
+        Returns the parsed JSON content of the Google service account key,
+        or raises an error if it's missing or invalid.
+        """
+
+        GOOGLE_SERVICE_ACCOUNT_JSON={
+            "type": "service_account",
+            "project_id": self.GOOGLE_SERVICE_ACCOUNT_PROJECT,
+            "private_key_id": self.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY_ID,
+            "private_key": self.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY,
+            "client_email": self.GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL,
+            "client_id": self.GOOGLE_SERVICE_ACCOUNT_CLIENT_ID,
+        }
+
+        return GOOGLE_SERVICE_ACCOUNT_JSON
     
     @property
     def firebase_service_account_info(self) -> dict:
@@ -83,18 +110,6 @@ class Settings:
             return json.loads(self.FIREBASE_CREDENTIALS_JSON)
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON in FIREBASE_CREDENTIALS_JSON: {e}")
-    @property
-    def google_service_account_info(self) -> dict:
-        """
-        Returns the parsed JSON content of the Google service account key,
-        or raises an error if it's missing or invalid.
-        """
-        if not self.GOOGLE_SERVICE_ACCOUNT_JSON:
-            raise ValueError("GOOGLE_SERVICE_ACCOUNT_JSON environment variable is not set")
-        try:
-            return json.loads(self.GOOGLE_SERVICE_ACCOUNT_JSON)
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON in GOOGLE_SERVICE_ACCOUNT_JSON: {e}")
     @property
     def server_host(self) -> str:
         return f"http://{self.DOMAIN}" if self.ENVIRONMENT == "local" else f"https://{self.DOMAIN}"

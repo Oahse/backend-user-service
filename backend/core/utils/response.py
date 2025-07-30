@@ -1,5 +1,7 @@
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
+from typing import Union, Any
 
 def get_message_from_code(code: int) -> str:
     """
@@ -89,7 +91,7 @@ def get_message_from_code(code: int) -> str:
     # Default to the status code if not found in the dictionary
     return message_dict.get(code, f"Unknown status code {code}")
 
-def Response(data=None, success=True, message=None, code=200):
+def Response(data: Any = None, success: bool = True,message: Union[str, dict]=None, code: int = 200):
     """
     A generic response handler for JSON responses with status, message, and data.
 
@@ -106,10 +108,10 @@ def Response(data=None, success=True, message=None, code=200):
     r_message = message if message else get_message_from_code(code)
     
     return JSONResponse(
-        content={
-            "data": data,
+        content=jsonable_encoder({
             "message": r_message,
+            "data": data,
             "success": success
-        },
+        }),
         status_code=code
     )

@@ -37,8 +37,8 @@ services:
 
   userservice:
     build:
-      context: .
-      dockerfile: ./backend/Dockerfile.prod
+      context: ./backend
+      dockerfile: Dockerfile.prod
     command: uvicorn main:app --host 0.0.0.0 --port 8000
     container_name: userservice
     depends_on:
@@ -67,9 +67,8 @@ services:
 
   celery_worker:
     build:
-      context: .
-      dockerfile: ./backend/Dockerfile.prod
-    container_name: celery_worker
+      context: ./backend
+      dockerfile: Dockerfile.prod
     command: celery -A tasks worker --loglevel=info
     depends_on:
       redis:
@@ -87,20 +86,6 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/2
 
-  flower:
-    image: mher/flower
-    container_name: flower
-    restart: unless-stopped
-    expose:
-      - "5555"
-    command: flower --broker=redis://redis:6379/1
-    depends_on:
-      redis:
-        condition: service_healthy
-    networks:
-      - webnet
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/1
 
   frontend:
     build:

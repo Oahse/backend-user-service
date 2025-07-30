@@ -64,7 +64,7 @@ class UserBase(BaseModel):
     addresses: Optional[List[AddressCreate]] = []
 
 class UserCreate(UserBase):
-    password_hash: str
+    password: str
 
     @field_validator('password', mode='before')
     def validate_password(cls, v: str) -> str:

@@ -1,7 +1,9 @@
 from telegram import Update, Bot
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.error import InvalidToken
 from typing import Optional
-from core.config import settings
+from core.config import settings,logger
+
 
 class TelegramBotHandler:
     def __init__(self, token: str):
@@ -54,16 +56,26 @@ class TelegramBotHandler:
 
 BOT_TOKEN = str(settings.TELEGRAM_BOT_TOKEN) 
 
-telegram_bot = TelegramBotHandler(BOT_TOKEN)
-# Replace with your bot token
-telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
+try:
+    if not BOT_TOKEN or BOT_TOKEN.strip() == "":
+        raise InvalidToken("Telegram bot token is missing or empty!")
 
-# Add the /start command
-telegram_app.add_handler(CommandHandler("start", telegram_bot.start))
+    telegram_bot = TelegramBotHandler(BOT_TOKEN)
+    telegram_app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-# Add the /help command
-telegram_app.add_handler(CommandHandler("help", telegram_bot.help))
+    telegram_app.add_handler(CommandHandler("start", telegram_bot.start))
+    telegram_app.add_handler(CommandHandler("help", telegram_bot.help))
+
+except InvalidToken as e:
+    logger.error(f"Failed to initialize Telegram bot: {e}")
+    telegram_bot = None
+    telegram_app = None
 
 async def run_telegram_bot():
-    # Start the bot
-    await telegram_app.run_polling()
+    if telegram_app is None:
+        logger.error("Telegram bot application is not initialized. Aborting run.")
+        return
+    try:
+        await telegram_app.run_polling()
+    except Exception as e:
+        logger.error(f"Exception occurred during Telegram bot polling: {e}")

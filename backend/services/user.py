@@ -50,7 +50,7 @@ class AuthService:
             if existing_phone:
                 raise HTTPException(status_code=400, detail="Phone number already registered.")
 
-        hashed_password = get_password_hash(user_data.password_hash)
+        hashed_password = get_password_hash(user_data.password)
 
         # Step 1: Create user without picture link
         db_user = User(
@@ -87,23 +87,24 @@ class AuthService:
         await self.db.refresh(db_user)  # Now db_user.id exists!
 
         # Step 2: Upload image with user ID as filename
-        google_drive = GoogleDrive(jsonkey=settings.google_service_account_info)
-        picture = google_drive.upload_base64_image_as_webp(
-            base64_str=user_data.picture,
-            filename=f"{db_user.id}.webp",
-            folder_id=None,
-            quality=30
-        )
+        if user_data.picture:
+            google_drive = GoogleDrive(jsonkey=settings.google_service_account_info)
+            picture = google_drive.upload_base64_image_as_webp(
+                base64_str=user_data.picture,
+                filename=f"{db_user.id}.webp",
+                folder_id=None,
+                quality=30
+            )
 
-        # Step 3: Update user picture link
-        db_user.picture = picture['link']
-        self.db.add(db_user)
-        await self.db.commit()
-        await self.db.refresh(db_user)
+            # Step 3: Update user picture link
+            db_user.picture = picture['link']
+            self.db.add(db_user)
+            await self.db.commit()
+            await self.db.refresh(db_user)
 
         # Step 4: Send verification OTP
-        email_service = EmailService(background_tasks)
-        await email_service._send_verification_otp(db_user.email, background_tasks)
+        # email_service = EmailService(background_tasks)
+        # await email_service._send_verification_otp(db_user.email, background_tasks)
         return db_user
 
     async def login_user(self, login_data: UserLogin) -> dict:
