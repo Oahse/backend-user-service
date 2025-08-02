@@ -30,7 +30,7 @@ async def get_current_user(
 async def get_current_admin_user(
     current_user=Depends(get_current_user)
 ):
-    if current_user.role != UserRole.ADMIN:
+    if current_user.role != UserRole.Admin:
         raise HTTPException(status_code=403, detail="Admin privileges required.")
     return current_user
 
@@ -131,6 +131,7 @@ async def get_user_by_id(
     admin_user=Depends(get_current_admin_user),
     auth_service: AuthService = Depends(get_auth_service)
 ):
+    print(user_id,'=====================================')
     user = await auth_service._get_user_by_id(UUID(user_id))
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -200,7 +201,7 @@ async def get_roles():
     roles = [role.value for role in UserRole]
     return Response(data=roles, message="User roles fetched", code=200)
 
-@router.get("/admin/users/search")
+@router.get("/admin/search/users")
 async def search_users(
     email: Optional[str] = Query(None),
     role: Optional[UserRole] = Query(None),
@@ -220,7 +221,7 @@ async def search_users(
     return Response(data=[u.to_dict() for u in users], message="Filtered users fetched", code=200)
 
 
-@router.get("/admin/users/by-email")
+@router.get("/admin/user/by-email")
 async def get_user_by_email(
     email: str = Query(...),
     admin_user=Depends(get_current_admin_user),

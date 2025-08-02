@@ -30,28 +30,18 @@ RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 COPY requirements*.txt ./
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copy scripts and app
-COPY run_migrations.sh ./run_migrations.sh
+# Copy app source
 COPY . .
-RUN chmod +x run_migrations.sh && chown -R appuser:appgroup /usr/src/app
 
-USER appuser
+RUN curl -s -o wait-for-it.sh https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh && \
+    chmod +x wait-for-it.sh
 
-# Health check and port
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8000/health || exit 1
+RUN chmod +x ./entrypoint.dev.sh
 
+# Expose FastAPI port
 EXPOSE 8000
 
-# Final CMD with inline wait logic and FastAPI launch
-CMD bash -c "\
-  echo '[INFO] Waiting for Postgres...' && \
-  /usr/local/bin/wait-for-it.sh users-db:5432 --timeout=30 --strict && \
-  echo '[INFO] Postgres ready.' && \
-  echo '[INFO] Waiting for Redis...' && \
-  /usr/local/bin/wait-for-it.sh redis:6379 --timeout=30 --strict && \
-  echo '[INFO] Redis ready.' && \
-  echo '[INFO] Running migrations...' && \
-  ./run_migrations.sh && \
-  echo '[INFO] Starting FastAPI...' && \
-  uvicorn main:app --host 0.0.0.0 --port 8000 --reload --workers 2"
+# Entrypoint script will handle waiting + migration + app start
+ENTRYPOINT ["/usr/src/app/entrypoint.dev.sh"]
+
+

@@ -49,63 +49,66 @@ class AuthService:
             existing_phone = await self._get_user_by_phone(user_data.phone)
             if existing_phone:
                 raise HTTPException(status_code=400, detail="Phone number already registered.")
+        try:
+            hashed_password = get_password_hash(user_data.password)
 
-        hashed_password = get_password_hash(user_data.password)
-
-        # Step 1: Create user without picture link
-        db_user = User(
-            email=user_data.email,
-            phone=user_data.phone,
-            password_hash=hashed_password,
-            firstname=user_data.firstname,
-            lastname=user_data.lastname,
-            role=user_data.role,
-            verified=False,
-            active=True,
-            telegram=user_data.telegram,
-            age=user_data.age,
-            picture=None,  # temporarily None
-            whatsapp=user_data.whatsapp,
-            gender=user_data.gender,
-        )
-        # After creating db_user
-        if user_data.addresses:
-            for addr in user_data.addresses:
-                address = Address(
-                    user_id=db_user.id,
-                    street=addr.street,
-                    city=addr.city,
-                    state=addr.state,
-                    country=addr.country,
-                    post_code=addr.post_code,
-                    kind=addr.kind
-                )
-                self.db.add(address)
-            await self.db.commit()
-        self.db.add(db_user)
-        await self.db.commit()
-        await self.db.refresh(db_user)  # Now db_user.id exists!
-
-        # Step 2: Upload image with user ID as filename
-        if user_data.picture:
-            google_drive = GoogleDrive(jsonkey=settings.google_service_account_info)
-            picture = google_drive.upload_base64_image_as_webp(
-                base64_str=user_data.picture,
-                filename=f"{db_user.id}.webp",
-                folder_id=None,
-                quality=30
+            # Step 1: Create user without picture link
+            db_user = User(
+                email=user_data.email,
+                phone=user_data.phone,
+                password_hash=hashed_password,
+                firstname=user_data.firstname,
+                lastname=user_data.lastname,
+                role=UserRole(user_data.role),
+                verified=False,
+                active=True,
+                telegram=user_data.telegram,
+                age=user_data.age,
+                picture=None,  # temporarily None
+                whatsapp=user_data.whatsapp,
+                gender=user_data.gender,
             )
-
-            # Step 3: Update user picture link
-            db_user.picture = picture['link']
+            # After creating db_user
+            if user_data.addresses:
+                for addr in user_data.addresses:
+                    address = Address(
+                        user_id=db_user.id,
+                        street=addr.street,
+                        city=addr.city,
+                        state=addr.state,
+                        country=addr.country,
+                        post_code=addr.post_code,
+                        kind=addr.kind
+                    )
+                    self.db.add(address)
+                await self.db.commit()
             self.db.add(db_user)
             await self.db.commit()
-            await self.db.refresh(db_user)
+            await self.db.refresh(db_user)  # Now db_user.id exists!
 
-        # Step 4: Send verification OTP
-        # email_service = EmailService(background_tasks)
-        # await email_service._send_verification_otp(db_user.email, background_tasks)
-        return db_user
+            # Step 2: Upload image with user ID as filename
+            if user_data.picture:
+                google_drive = GoogleDrive(jsonkey=settings.google_service_account_info)
+                picture = google_drive.upload_base64_image_as_webp(
+                    base64_str=user_data.picture,
+                    filename=f"{db_user.id}.webp",
+                    folder_id=None,
+                    quality=30
+                )
+
+                # Step 3: Update user picture link
+                db_user.picture = picture['link']
+                self.db.add(db_user)
+                await self.db.commit()
+                await self.db.refresh(db_user)
+
+            # Step 4: Send verification OTP
+            # email_service = EmailService(background_tasks)
+            # await email_service._send_verification_otp(db_user.email, background_tasks)
+            return db_user
+        except Exception as e:
+            await self.db.rollback()
+            raise HTTPException(status_code=500, detail=f"Error registering user: {str(e)}")
 
     async def login_user(self, login_data: UserLogin) -> dict:
         """Authenticate user and return JWT tokens."""

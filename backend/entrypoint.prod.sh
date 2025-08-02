@@ -1,6 +1,6 @@
-#!/bin/bash
-# Exit immediately if a command exits with a non-zero status or error
-set -e
+#!/bin/sh
+
+
 # Define colors
 RED="\033[0;31m"
 GREEN="\033[0;32m"
@@ -15,11 +15,11 @@ warn() { echo -e "${YELLOW}[WARN]${RESET} $1"; }
 
 # Wait for users-db to be ready
 info "Waiting for users-db to be ready..."
-wait-for-it.sh users-db:5432 --timeout=30 --strict -- sh -c 'echo "[INFO] PostgreSQL Database is up"'
+wait-for-it.sh users-db:5432 --timeout=10 --strict -- sh -c 'echo "[INFO] PostgreSQL Database is up"'
 
 # Wait for Redis
 info "Waiting for Redis to be ready..."
-wait-for-it.sh redis:6379 --timeout=30 --strict -- sh -c 'echo "[INFO] Redis is up"'
+wait-for-it.sh redis:6379 --timeout=10 --strict -- sh -c 'echo "[INFO] Redis is up"'
 
 info "Making migration script executable..."
 chmod +x ./run_migrations.sh && success "Migration script made executable"
@@ -32,7 +32,7 @@ info "Starting server..."
 exec uvicorn main:app \
     --host 0.0.0.0 \
     --port 8000 \
-    --workers 4 \
+    --workers 2 \
     --worker-class uvicorn.workers.UvicornWorker \
     --proxy-headers \
     --forwarded-allow-ips="*" \

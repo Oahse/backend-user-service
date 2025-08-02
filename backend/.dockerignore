@@ -24,7 +24,8 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
+alembic/
+alembic.ini
 # Virtual environments
 .env
 .venv

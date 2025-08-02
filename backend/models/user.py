@@ -74,7 +74,7 @@ class User(Base):
     picture: Mapped[str] = mapped_column(Text, nullable=True)
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), nullable=False, index=True)
     verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
-    
+    whatsapp: Mapped[str] = mapped_column(String(CHAR_LENGTH))
     telegram: Mapped[str] = mapped_column(String(CHAR_LENGTH))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, index=True)
