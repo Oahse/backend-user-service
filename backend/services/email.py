@@ -24,7 +24,7 @@ class EmailService:
             from_email=settings.SMTP_USER,
             from_password=settings.SMTP_PASSWORD,
             mail_type=mail_type,
-            **context
+            context=context
         )
 
     async def _send_password_reset_otp(self, email: str, background_tasks: BackgroundTasks) -> None:

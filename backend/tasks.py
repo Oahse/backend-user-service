@@ -10,12 +10,12 @@ celery_app = Celery(
 )
 
 @celery_app.task
-def send_email_async(to_email: str, from_email: str, from_password: str, mail_type: str, **kwargs):
+def send_email_async(to_email: str, from_email: str, from_password: str, mail_type: str, context: dict = {}):
     print(f"Sending email to {to_email}: {mail_type}\n")
     send_email(
         to_email=to_email,
         from_email=from_email,
         from_password=from_password,
         mail_type=mail_type,
-        **kwargs
+        context=context
     )

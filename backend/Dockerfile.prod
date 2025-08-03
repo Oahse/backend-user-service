@@ -8,7 +8,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Set working directory
 WORKDIR /usr/src/app
 
 # Install OS packages
@@ -20,33 +19,28 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Create app user with specific UID/GID for security
-RUN groupadd -r -g 1001 appgroup && \
-    useradd -r -u 1001 -g appgroup -d /usr/src/app -s /sbin/nologin appuser
-
 # Download wait-for-it.sh
 RUN curl -sSL https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh \
     -o /usr/local/bin/wait-for-it.sh && chmod +x /usr/local/bin/wait-for-it.sh
 
-# Install Python dependencies
+# App user
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
+
+# Python dependencies
 COPY requirements*.txt ./
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copy application source
+# Copy app source
 COPY . .
 
-# Set entrypoint script permissions
-RUN chmod +x ./entrypoint.prod.sh && chown -R appuser:appgroup /usr/src/app
+RUN curl -s -o wait-for-it.sh https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh && \
+    chmod +x wait-for-it.sh
 
-# Use non-root user for security
-USER appuser
-
-# Health check for FastAPI
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+RUN chmod +x ./entrypoint.prod.sh
 
 # Expose FastAPI port
 EXPOSE 8000
+
 
 # Start the app with the entrypoint
 ENTRYPOINT ["/usr/src/app/entrypoint.prod.sh"]

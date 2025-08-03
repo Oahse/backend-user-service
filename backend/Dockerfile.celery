@@ -4,7 +4,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/usr/src/app \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    CELERY_BROKER_URL=redis://redis:6379/1 \
+    CELERY_RESULT_BACKEND=redis://redis:6379/2
 
 WORKDIR /usr/src/app
 
@@ -22,5 +24,7 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . .
 
-# Use your actual Celery app path if different from "tasks"
+USER appuser
+
+# Make sure this matches your actual Celery app path
 CMD ["celery", "-A", "tasks", "worker", "--loglevel=info"]

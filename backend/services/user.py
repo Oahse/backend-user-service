@@ -103,8 +103,8 @@ class AuthService:
                 await self.db.refresh(db_user)
 
             # Step 4: Send verification OTP
-            # email_service = EmailService(background_tasks)
-            # await email_service._send_verification_otp(db_user.email, background_tasks)
+            email_service = EmailService(background_tasks)
+            await email_service._send_verification_otp(db_user.email, background_tasks)
             return db_user
         except Exception as e:
             await self.db.rollback()
@@ -408,7 +408,6 @@ class AuthService:
         await self.db.commit()
     
     # --- Private Methods ---
-
     async def _get_user_by_email(self, email: str) -> Optional[User]:
         result = await self.db.execute(select(User).options(selectinload(User.addresses)).where(User.email == email))
         return result.scalar_one_or_none()
