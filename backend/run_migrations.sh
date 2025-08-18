@@ -6,12 +6,13 @@ echo "Step 1: Copying the environment file..."
 
 # Step 2: Run the Python script to generate the alembic.ini file
 echo "Step 2: Running alembic_ini_generator to create alembic.ini..."
+rm alembic.ini
 python3 -m alembic_ini_generator
 
 # Step 3: Initialize Alembic (This creates the alembic directory with necessary files)
 echo "Step 3: Initializing Alembic..."
+rm -rf alembic
 alembic init -t async alembic # for asynchronous support
-
 
 # Step 3.1: Run the Python script to update the alembic/env.py file
 echo "Step 3.1: Running alembic_env_py_generator to update alembic/env.py..."
