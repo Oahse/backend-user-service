@@ -1,8 +1,8 @@
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update, delete
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import update, delete,and_
+from uuid import UUID
 
 from datetime import datetime
 from models.payments import Payment, PaymentStatus, PaymentMethod  # adjust import as needed
@@ -14,7 +14,7 @@ class PaymentService:
 
     async def create_payment(
         self,
-        order_id: str,
+        order_id: UUID,
         method: PaymentMethod,
         amount: float,
         currency: str,
@@ -26,9 +26,7 @@ class PaymentService:
         refunded_amount: float = 0.0,
     ) -> Payment:
         try:
-            payment_id = str(generator.get_id())
             payment = Payment(
-                id=payment_id,
                 order_id=order_id,
                 method=method,
                 amount=amount,
@@ -47,13 +45,13 @@ class PaymentService:
             await self.db.rollback()
             raise e
 
-    async def get_payment(self, payment_id: str) -> Optional[Payment]:
+    async def get_payment(self, payment_id: UUID) -> Optional[Payment]:
         result = await self.db.execute(select(Payment).where(Payment.id == payment_id))
         return result.scalar_one_or_none()
 
     async def update_payment(
         self,
-        payment_id: str,
+        payment_id: UUID,
         **kwargs
     ) -> Optional[Payment]:
         # Fetch existing payment
@@ -72,7 +70,7 @@ class PaymentService:
             await self.db.rollback()
             raise e
 
-    async def delete_payment(self, payment_id: str) -> bool:
+    async def delete_payment(self, payment_id: UUID) -> bool:
         
         payment = await self.get_payment(payment_id)
         if not payment:
@@ -87,8 +85,8 @@ class PaymentService:
 
     async def get_all(
         self,
-        order_id: Optional[str] = None,
-        user_id: Optional[str] = None,
+        order_id: Optional[UUID] = None,
+        user_id: Optional[UUID] = None,
         method: Optional[PaymentMethod] = None,
         status: Optional[PaymentStatus] = None,
         amount: Optional[float] = None,

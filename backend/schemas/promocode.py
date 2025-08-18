@@ -1,10 +1,7 @@
 from datetime import datetime
 
 from pydantic import BaseModel, Field, condecimal
-from sqlalchemy.dialects.postgresql import UUID
-
-
-import uuid
+from uuid import UUID
 
 class PromoCodeBase(BaseModel):
     code: str = Field(..., max_length=50)

@@ -5,8 +5,8 @@ from typing import List, Optional
 from core.database import get_db
 from services.category import CategoryService
 from schemas.category import CategoryCreate, CategoryRead
-from core.utils.response import NotFoundError, Response
-from sqlalchemy.dialects.postgresql import UUID
+from core.utils.response import Response
+from uuid import UUID
 
 
 import uuid

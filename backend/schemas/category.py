@@ -1,10 +1,6 @@
 from typing import Optional
-
 from pydantic import BaseModel, Field
-from sqlalchemy.dialects.postgresql import UUID
-
-
-import uuid
+from uuid import UUID
 
 class CategoryBase(BaseModel):
     name: str = Field(..., max_length=100)

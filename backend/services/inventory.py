@@ -4,9 +4,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import update, delete
 from sqlalchemy import and_, or_
 from typing import List, Optional
-from models.products import (Product, Inventory, UUID, uuid)
-from schemas.inventory import (InventoryCreate)
-from core.utils.response import NotFoundError
+from models.products import (Product, Inventory,  uuid)
+from schemas.inventory import (UUID,InventoryCreate)
 
 class InventoryService:
     def __init__(self, db: AsyncSession):

@@ -5,7 +5,7 @@ from typing import List, Optional
 from datetime import datetime
 from schemas.orders import OrderSchema, OrderItemSchema,UpdateOrderSchema,OrderFilterSchema
 from models.orders import Order, OrderItem, OrderStatus
-from services.orders import OrderService, OrderItemService
+from services.orders import OrderService, OrderItemService,UUID
 from core.database import get_db  # Make sure this returns AsyncSession
 from core.utils.response import Response
 
@@ -25,7 +25,7 @@ async def create_order(order_in: OrderSchema,db: AsyncSession = Depends(get_db))
 
 
 @router.get("/{order_id}")
-async def get_order(order_id: str, db: AsyncSession = Depends(get_db)):
+async def get_order(order_id: UUID, db: AsyncSession = Depends(get_db)):
     try:
         service = OrderService(db)
         order = await service.get_order_by_id(order_id)
@@ -37,7 +37,7 @@ async def get_order(order_id: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.put("/{order_id}")
-async def update_order(order_id: str, update_data: UpdateOrderSchema, db: AsyncSession = Depends(get_db)):
+async def update_order(order_id: UUID, update_data: UpdateOrderSchema, db: AsyncSession = Depends(get_db)):
     try:
         service = OrderService(db)
         order = await service.update_order(order_id, update_data)
@@ -47,7 +47,7 @@ async def update_order(order_id: str, update_data: UpdateOrderSchema, db: AsyncS
 
 
 @router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_order(order_id: str, db: AsyncSession = Depends(get_db)):
+async def delete_order(order_id: UUID, db: AsyncSession = Depends(get_db)):
     try:
         service = OrderService(db)
         deleted = await service.delete_order(order_id)
@@ -60,7 +60,7 @@ async def delete_order(order_id: str, db: AsyncSession = Depends(get_db)):
 
 @router.get("/")
 async def get_all_orders(
-    user_id: Optional[str] = Query(None),
+    user_id: Optional[UUID] = Query(None),
     status: Optional[OrderStatus] = Query(None),
     start_date: Optional[datetime] = Query(None),
     end_date: Optional[datetime] = Query(None),
@@ -87,8 +87,8 @@ async def get_all_orders(
 
 @router.post("/items", status_code=status.HTTP_201_CREATED)
 async def create_order_item(
-    order_id: str,
-    product_id: str,
+    order_id: UUID,
+    product_id: UUID,
     quantity: int,
     price_per_unit: float,
     db: AsyncSession = Depends(get_db),
@@ -102,7 +102,7 @@ async def create_order_item(
 
 
 @router.get("/items/{item_id}")
-async def get_order_item(item_id: str, db: AsyncSession = Depends(get_db)):
+async def get_order_item(item_id: UUID, db: AsyncSession = Depends(get_db)):
     try:
         service = OrderItemService(db)
         item = await service.get_order_item(item_id)
@@ -112,7 +112,7 @@ async def get_order_item(item_id: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.put("/items/{item_id}")
-async def update_order_item(item_id: str, update_data:OrderItemSchema, db: AsyncSession = Depends(get_db)):
+async def update_order_item(item_id: UUID, update_data:OrderItemSchema, db: AsyncSession = Depends(get_db)):
     try:
         service = OrderItemService(db)
         item = await service.update_order_item(item_id, update_data)
@@ -122,7 +122,7 @@ async def update_order_item(item_id: str, update_data:OrderItemSchema, db: Async
 
 
 @router.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_order_item(item_id: str, db: AsyncSession = Depends(get_db)):
+async def delete_order_item(item_id: UUID, db: AsyncSession = Depends(get_db)):
     try:
         service = OrderItemService(db)
         deleted = await service.delete_order_item(item_id)
@@ -134,8 +134,8 @@ async def delete_order_item(item_id: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/{order_id}/items")
-async def list_items_for_order(order_id: str,
-            product_id: Optional[str] = None,
+async def list_items_for_order(order_id: UUID,
+            product_id: Optional[UUID] = None,
             quantity: Optional[int] = None,
             price_per_unit: Optional[float] = None,
             limit: int = 10,

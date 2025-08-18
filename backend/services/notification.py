@@ -4,7 +4,7 @@ from core.utils.messages.push import send_push
 from core.utils.messages.sms import send_sms
 from core.utils.messages.whatsapp import whatapp_bot
 from core.utils.messages.telegram import TelegramBotHandler as tbot
-
+from uuid import UUID
 
 class NotificationService:
     def __init__(self, background_tasks: BackgroundTasks):
@@ -12,7 +12,7 @@ class NotificationService:
 
     async def send_sms_message(
         self,
-        to_user_id: str,
+        to_user_id: UUID,
         body: str,
         token: str,
         data: Optional[Dict[str, Any]] = None,
@@ -36,7 +36,7 @@ class NotificationService:
         
     async def send_push_message(
         self,
-        to_user_id: str,
+        to_user_id: UUID,
         body: str,
         token: str,
         data: Optional[Dict[str, Any]] = None,

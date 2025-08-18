@@ -3,9 +3,9 @@ from sqlalchemy.future import select
 from sqlalchemy import and_, or_
 
 from typing import List, Optional
-from models.category import (Category, UUID, uuid)
-from schemas.category import (CategoryCreate)
-from core.utils.response import NotFoundError
+from models.category import (Category,  uuid)
+from schemas.category import (UUID,CategoryCreate)
+
 
 class CategoryService:
     def __init__(self, db: AsyncSession):

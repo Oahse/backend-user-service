@@ -6,8 +6,8 @@ from fastapi import BackgroundTasks, HTTPException
 from typing import List, Optional
 from datetime import datetime
 import json
-from models.products import UUID, uuid, Product, ProductVariant, ProductVariantImage, ProductVariantAttribute, AvailabilityStatus, Tag, InventoryProduct
-from schemas.products import ProductCreate, ProductVariantCreate, ProductVariantUpdate, ProductVariantRead, ProductVariantAttributeCreate, ProductVariantImageCreate
+from models.products import uuid, Product, ProductVariant, ProductVariantImage, ProductVariantAttribute, AvailabilityStatus, Tag, InventoryProduct
+from schemas.products import UUID, ProductCreate, ProductVariantCreate, ProductVariantUpdate, ProductVariantRead, ProductVariantAttributeCreate, ProductVariantImageCreate
 from services.category import CategoryService
 from core.config import settings
 from core.utils.kafka import KafkaProducer, send_kafka_message, is_kafka_available
@@ -115,8 +115,8 @@ class ProductService:
     async def get_all(
         self,
         name: Optional[str] = None,
-        category_id: Optional[str] = None,
-        tag_id: Optional[str] = None,
+        category_id: Optional[UUID] = None,
+        tag_id: Optional[UUID] = None,
         availability: Optional[AvailabilityStatus] = None,
         min_price: Optional[float] = None,
         max_price: Optional[float] = None,

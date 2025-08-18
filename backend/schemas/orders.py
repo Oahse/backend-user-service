@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
 from enum import Enum
-
+from uuid import UUID
 
 class OrderStatus(str, Enum):
     Pending = "Pending"
@@ -25,7 +25,7 @@ class OrderItemSchema(BaseModel):
 
 
 class OrderSchema(BaseModel):
-    user_id: str
+    user_id: UUID
     status: OrderStatus
     total_amount: float
     currency: str = Field(default="USD")
@@ -37,7 +37,7 @@ class OrderSchema(BaseModel):
         from_attributes = True
 
 class OrderFilterSchema(BaseModel):
-    user_id: Optional[str] = None
+    user_id: Optional[UUID] = None
     status: Optional[OrderStatus] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None

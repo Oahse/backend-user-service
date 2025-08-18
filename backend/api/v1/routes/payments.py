@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from models.payments import Payment, PaymentMethod, PaymentStatus  # adjust imports
-from services.payments import PaymentService  # async service for payments
+from services.payments import PaymentService, UUID  # async service for payments
 from core.database import get_db  # async session dependency
 from core.utils.response import Response
 from datetime import datetime
@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/v1/payments", tags=["Payments"])
 
 @router.post("/",status_code=status.HTTP_201_CREATED)
 async def create_payment(
-    order_id: str,
+    order_id: UUID,
     amount: float,
     currency: str,
     method: PaymentMethod,
@@ -40,7 +40,7 @@ async def create_payment(
         return Response(success=False, message=str(e), code=500)
 
 @router.get("/{payment_id}")
-async def get_payment(payment_id: str, db: AsyncSession = Depends(get_db)):
+async def get_payment(payment_id: UUID, db: AsyncSession = Depends(get_db)):
     try:
         service = PaymentService(db)
         payment = await service.get_payment(payment_id)
@@ -50,7 +50,7 @@ async def get_payment(payment_id: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.put("/{payment_id}")
-async def update_payment(payment_id: str, update_data: dict, db: AsyncSession = Depends(get_db)):
+async def update_payment(payment_id: UUID, update_data: dict, db: AsyncSession = Depends(get_db)):
     try:
         service = PaymentService(db)
         payment = await service.update_payment(payment_id, **update_data)
@@ -60,7 +60,7 @@ async def update_payment(payment_id: str, update_data: dict, db: AsyncSession = 
 
 
 @router.delete("/{payment_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_payment(payment_id: str, db: AsyncSession = Depends(get_db)):
+async def delete_payment(payment_id: UUID, db: AsyncSession = Depends(get_db)):
     try:
         service = PaymentService(db)
         deleted = await service.delete_payment(payment_id)
@@ -73,8 +73,8 @@ async def delete_payment(payment_id: str, db: AsyncSession = Depends(get_db)):
 
 @router.get("/")
 async def get_all_payments(
-        order_id: Optional[str] = None,
-        user_id: Optional[str] = None,
+        order_id: Optional[UUID] = None,
+        user_id: Optional[UUID] = None,
         method: Optional[PaymentMethod] = None,
         status: Optional[PaymentStatus] = None,
         amount: Optional[float] = None,

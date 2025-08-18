@@ -1,10 +1,10 @@
 from enum import Enum
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
-
+from uuid import UUID
 
 class NotificationCreate(BaseModel):
-    to_user_id: str
+    to_user_id: UUID
     body: str
     token: str
     data: Optional[Dict[str, Any]] = None

@@ -7,7 +7,7 @@ from core.database import get_db
 from services.promocode import PromoCodeService
 from schemas.promocode import PromoCodeCreate
 from core.utils.response import Response
-from sqlalchemy.dialects.postgresql import UUID
+from uuid import UUID
 
 
 import uuid

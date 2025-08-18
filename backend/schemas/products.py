@@ -6,10 +6,7 @@ from pydantic import BaseModel, Field, condecimal
 from schemas.category import CategoryRead
 from schemas.tag import TagRead
 from schemas.inventory import InventoryRead
-from sqlalchemy.dialects.postgresql import UUID
-
-
-import uuid
+from uuid import UUID
 
 class AvailabilityStatus(str, PyEnum):
     IN_STOCK = "In Stock"

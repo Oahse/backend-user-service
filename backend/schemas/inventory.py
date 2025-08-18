@@ -1,9 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel
-from sqlalchemy.dialects.postgresql import UUID
-
-
-import uuid
+from uuid import UUID
 # ---------- Inventory Schemas ----------
 
 class InventoryBase(BaseModel):

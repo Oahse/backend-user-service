@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr, field_validator, ConfigDict
 from typing import List, Optional
 from enum import Enum
 from datetime import datetime
-from sqlalchemy.dialects.postgresql import UUID
+from uuid import UUID
 
 # --- Enums ---
 class AddressType(str, Enum):

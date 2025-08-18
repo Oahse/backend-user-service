@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from core.database import get_db
 from core.utils.response import Response
-from schemas.user import AddressCreate, AddressUpdate, AddressRead
+from schemas.user import AddressCreate, AddressUpdate, AddressRead,UUID
 from services.address import AddressService
 
 router = APIRouter(prefix='/api/v1/addresses', tags=["Addresses"])
@@ -28,7 +28,7 @@ async def create_address(address_in: AddressCreate, db: AsyncSession = Depends(g
 
 
 @router.get("/{address_id}")
-async def get_address(address_id: int, db: AsyncSession = Depends(get_db)):
+async def get_address(address_id: UUID, db: AsyncSession = Depends(get_db)):
     service = AddressService(db)
     address = await service.get_address_by_id(address_id)
     if not address:
@@ -37,7 +37,7 @@ async def get_address(address_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.put("/{address_id}")
-async def update_address(address_id: int, address_in: AddressUpdate, db: AsyncSession = Depends(get_db)):
+async def update_address(address_id: UUID, address_in: AddressUpdate, db: AsyncSession = Depends(get_db)):
     service = AddressService(db)
     updated_address = await service.update_address(address_id, **address_in.dict(exclude_unset=True))
     if not updated_address:
@@ -46,7 +46,7 @@ async def update_address(address_id: int, address_in: AddressUpdate, db: AsyncSe
 
 
 @router.delete("/{address_id}")
-async def delete_address(address_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_address(address_id: UUID, db: AsyncSession = Depends(get_db)):
     service = AddressService(db)
     success = await service.delete_address(address_id)
     if not success:
@@ -55,7 +55,7 @@ async def delete_address(address_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/")
-async def list_addresses(user_id: Optional[int] = None, skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
+async def list_addresses(user_id: Optional[UUID] = None, skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
     service = AddressService(db)
     addresses = await service.list_addresses(user_id=user_id, skip=skip, limit=limit)
     return Response(data=addresses)

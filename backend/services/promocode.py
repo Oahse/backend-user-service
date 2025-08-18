@@ -4,8 +4,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import and_, or_, update, delete
 from typing import List, Optional
 from datetime import datetime, timedelta
-from models.promocode import (PromoCode, UUID, uuid)
-from schemas.promocode import (PromoCodeCreate)
+from models.promocode import (PromoCode, uuid)
+from schemas.promocode import (UUID, PromoCodeCreate)
 
 
 class PromoCodeService:

@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any
 from datetime import datetime
 from enum import Enum
-
+from uuid import UUID
 
 class PaymentMethod(str, Enum):
     CreditCard = "CreditCard"
@@ -37,14 +37,14 @@ class PaymentStatus(str, Enum):
 
 
 class ParentPaymentSchema(BaseModel):
-    id: str
+    id: UUID
 
     class Config:
         from_attributes = True
 
 
 class PaymentSchema(BaseModel):
-    id: str
+    id: UUID
     order_id: str
     user_id: Optional[str] = None
     method: PaymentMethod

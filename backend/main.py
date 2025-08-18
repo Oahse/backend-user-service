@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI):
     await redis_client.disconnect()
 
 app = FastAPI(
-    title="User Service API",
+    title="Banwee API",
     description="Handles user authentication, management, and address operations.",
     version="1.0.0",
     lifespan=lifespan,
@@ -115,7 +115,7 @@ async def health_check():
     except Exception as e:
         return {
             "status": "unhealthy",
-            "service": "User Service API",
+            "service": "Banwee API",
             "version": "1.0.0",
             "redis": "disconnected",
             "error": str(e)

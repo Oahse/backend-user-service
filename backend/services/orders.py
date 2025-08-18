@@ -3,11 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy import update, delete,and_
-from sqlalchemy.dialects.postgresql import UUID
-
-from core.utils.generator import generator
 from models.orders import Order, OrderItem, OrderStatus  # adjust import
-from schemas.orders import OrderSchema, OrderItemSchema,UpdateOrderSchema,OrderFilterSchema
+from schemas.orders import OrderSchema, OrderItemSchema,UpdateOrderSchema,OrderFilterSchema, UUID
 from core.config import settings
 from core.utils.kafka import KafkaProducer, send_kafka_message, is_kafka_available
 from datetime import datetime
@@ -21,8 +18,7 @@ class OrderService:
 
     async def create_order(self,order_in: OrderSchema) -> Order:
         try:
-            order_id = str(generator.get_id())
-            order = Order(id = order_id, 
+            order = Order(
                 user_id=order_in.user_id, 
                 total_amount=order_in.total_amount, 
                 currency=order_in.currency,
@@ -36,8 +32,7 @@ class OrderService:
             if order_in.items:
                 for item_data in order_in.items:
                     item = OrderItem(
-                        id = str(generator.get_id()),
-                        order_id=order_id,
+                        order_id=order.id,
                         product_id=item_data.product_id,
                         quantity=item_data.quantity,
                         price_per_unit=item_data.price_per_unit,
@@ -49,7 +44,7 @@ class OrderService:
 
             
             # Reload product with relationships eagerly loaded
-            order = await self.get_order_by_id(order_id)
+            order = await self.get_order_by_id(order.id)
             
             # Kafka background task
             await kafka_producer.start()
@@ -64,14 +59,14 @@ class OrderService:
             await self.db.rollback()
             raise e
 
-    async def get_order_by_id(self, order_id: str) -> Optional[Order]:
+    async def get_order_by_id(self, order_id: UUID) -> Optional[Order]:
         result = await self.db.execute(select(Order)
                     .options(
                         selectinload(Order.items)
                     ).where(Order.id == order_id))
         return result.scalar_one_or_none()
 
-    async def update_order(self, order_id: str, update_data: UpdateOrderSchema) -> Optional[Order]:
+    async def update_order(self, order_id: UUID, update_data: UpdateOrderSchema) -> Optional[Order]:
         order = await self.get_order_by_id(order_id)
         if not order:
             raise Exception("Order not found")
@@ -99,7 +94,6 @@ class OrderService:
                 for item_data in data["items"]:
                     
                     new_item = OrderItem(
-                        id=str(generator.get_id()),
                         order_id=order.id,
                         product_id=item_data['product_id'],
                         quantity=item_data['quantity'],
@@ -122,7 +116,7 @@ class OrderService:
             raise e
 
 
-    async def delete_order(self, order_id: str) -> bool:
+    async def delete_order(self, order_id: UUID) -> bool:
         order = await self.get_order_by_id(order_id)
         if not order:
             raise Exception("Order not found")
@@ -136,7 +130,7 @@ class OrderService:
 
     async def get_all(
         self,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
         status: Optional[OrderStatus] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
@@ -173,15 +167,14 @@ class OrderItemService:
 
     async def create_order_item(
         self,
-        order_id: str,
-        product_id: str,
+        order_id: UUID,
+        product_id: UUID,
         quantity: int,
         price_per_unit: float,
     ) -> OrderItem:
         try:
             total_price = quantity * price_per_unit
             item = OrderItem(
-                id = str(generator.get_id()),
                 order_id=order_id,
                 product_id=product_id,
                 quantity=quantity,
@@ -196,11 +189,11 @@ class OrderItemService:
             await self.db.rollback()
             raise e
 
-    async def get_order_item(self, item_id: str) -> Optional[OrderItem]:
+    async def get_order_item(self, item_id: UUID) -> Optional[OrderItem]:
         result = await self.db.execute(select(OrderItem).where(OrderItem.id == item_id))
         return result.scalar_one_or_none()
 
-    async def update_order_item(self, item_id: str, update_data:OrderItemSchema) -> Optional[OrderItem]:
+    async def update_order_item(self, item_id: UUID, update_data:OrderItemSchema) -> Optional[OrderItem]:
         item = await self.get_order_item(item_id)
         if not item:
             raise Exception("OrderItem not found")
@@ -233,7 +226,7 @@ class OrderItemService:
             await self.db.rollback()
             raise e
 
-    async def delete_order_item(self, item_id: str) -> bool:
+    async def delete_order_item(self, item_id: UUID) -> bool:
         item = await self.get_order_item(item_id)
         if not item:
             raise Exception("OrderItem not found")
@@ -248,8 +241,8 @@ class OrderItemService:
 
     async def get_all(
             self,
-            order_id: Optional[str] = None,
-            product_id: Optional[str] = None,
+            order_id: Optional[UUID] = None,
+            product_id: Optional[UUID] = None,
             quantity: Optional[int] = None,
             price_per_unit: Optional[float] = None,
             limit: int = 10,

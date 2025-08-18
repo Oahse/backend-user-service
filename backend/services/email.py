@@ -1,7 +1,7 @@
 from tasks import send_email_async
 from core.config import settings
 from core.utils.redis import redis_client
-from fastapi import APIRouter, Depends, HTTPException, status,BackgroundTasks
+from fastapi import BackgroundTasks
 import secrets,string, re
 
 class EmailService:

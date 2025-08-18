@@ -23,7 +23,7 @@ router = APIRouter(prefix="/api/v1/products", tags=["Products"])
 #     offset: int = 0,
 #     db: AsyncSession = Depends(get_db),
 # ):
-#     esclient = await get_elastic_db()
+#     esclient = None #await get_elastic_db()
 #     service = ProductService(db, esclient)
 #     try:
 #         result = await service.search(q, name, category_id, tag_id, availability,
@@ -46,7 +46,7 @@ async def get_all_products(
     offset: int = 0,
     db: AsyncSession = Depends(get_db),
 ):
-    esclient = await get_elastic_db()
+    esclient = None #None #await get_elastic_db()
     service = ProductService(db, esclient)
     try:
         products = await service.get_all(
@@ -61,7 +61,7 @@ async def get_all_products(
 @router.get("/{product_id}")
 async def get_product_by_id(product_id: str, db: AsyncSession = Depends(get_db)):
     
-    esclient = await get_elastic_db()
+    esclient = None #await get_elastic_db()
     service = ProductService(db, esclient)
     try:
         product = await service.get_by_id(product_id)
@@ -74,7 +74,7 @@ async def get_product_by_id(product_id: str, db: AsyncSession = Depends(get_db))
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_product(product_in: ProductCreate, db: AsyncSession = Depends(get_db)):
-    esclient = await get_elastic_db()
+    esclient = None #await get_elastic_db()
     service = ProductService(db, esclient)
 
     try:
@@ -86,7 +86,7 @@ async def create_product(product_in: ProductCreate, db: AsyncSession = Depends(g
 
 @router.put("/{product_id}")
 async def update_product(product_id: str, product_in: ProductCreate, db: AsyncSession = Depends(get_db)):
-    esclient = await get_elastic_db()
+    esclient = None #await get_elastic_db()
     service = ProductService(db, esclient)
     try:
         product = await service.update(product_id, product_in)
@@ -99,7 +99,7 @@ async def update_product(product_id: str, product_in: ProductCreate, db: AsyncSe
 
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_product(product_id: str, db: AsyncSession = Depends(get_db)):
-    esclient = await get_elastic_db()
+    esclient = None #await get_elastic_db()
     service = ProductService(db, esclient)
     try:
         res = await service.delete(product_id)

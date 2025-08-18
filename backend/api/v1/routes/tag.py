@@ -6,7 +6,7 @@ from core.database import get_db
 from services.tag import TagService
 from schemas.tag import TagCreate
 from core.utils.response import Response
-from sqlalchemy.dialects.postgresql import UUID
+from uuid import UUID
 
 
 import uuid
