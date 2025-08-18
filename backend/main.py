@@ -1,11 +1,19 @@
-from redis import asyncio as aioredis
 from fastapi import FastAPI, Request
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from routes.user import router as user_router
-from routes.address import router as address_router
-from routes.notification import router as notification_router
+from api.v1.routes.user import router as user_router
+from api.v1.routes.address import router as address_router
+from api.v1.routes.notification import router as notification_router
+from api.v1.routes.category import router as category_router
+from api.v1.routes.inventory import router as inventory_router
+from api.v1.routes.payments import router as payments_router
+from api.v1.routes.products import router as products_router
+from api.v1.routes.promocode import router as promocode_router
+from api.v1.routes.tag import router as tag_router
+from api.v1.routes.orders import router as orders_router
+
+
 from contextlib import asynccontextmanager
 from core.config import settings,logger
 from core.utils.response import Response, RequestValidationError
@@ -34,7 +42,9 @@ app = FastAPI(
     title="User Service API",
     description="Handles user authentication, management, and address operations.",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 if settings.BACKEND_CORS_ORIGINS:
@@ -52,21 +62,41 @@ app.add_middleware(
     allowed_hosts=["localhost", "127.0.0.1", "*.banwee.com"]
 )
 
-app.include_router(notification_router)
+# Include all routers
 app.include_router(user_router)
 app.include_router(address_router)
+app.include_router(notification_router)
+app.include_router(category_router)
+app.include_router(inventory_router)
+app.include_router(payments_router)
+app.include_router(products_router)
+app.include_router(promocode_router)
+app.include_router(tag_router)
+app.include_router(orders_router)
 
 
 @app.get("/")
 async def read_root():
     return {
-        "service": "User Service API",
+        "service": "Banwee API",
         "status": "Running",
         "version": "1.0.0",
         "endpoints": {
             "users": "/users",
-            "addresses": "/addresses",
             "login": "/users/login",
+            "addresses": "/addresses",
+            "notifications": "/notifications",
+            "categories": "/categories",
+            "inventory": "/inventory",
+            "payments": "/payments",
+            "products": "/products",
+            "promocodes": "/promocodes",
+            "tags": "/tags",
+            "orders": "/orders"
+        },
+        "docs": {
+            "Swagger": "/docs",
+            "ReDoc": "/redoc"
         }
     }
 
@@ -78,7 +108,7 @@ async def health_check():
         await redis_client.ping()
         return {
             "status": "healthy",
-            "service": "User Service API",
+            "service": "Banwee API",
             "version": "1.0.0",
             "redis": "connected"
         }
