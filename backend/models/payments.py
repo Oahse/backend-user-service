@@ -66,7 +66,7 @@ class Payment(Base):
     refunded_amount: Mapped[Optional[DECIMAL]] = mapped_column(DECIMAL(18, 8), default=0)
 
     # For partial refunds or multiple payment attempts
-    parent_payment_id: Mapped[Optional[str]] = mapped_column(String(CHAR_LENGTH), ForeignKey("payments.id"), nullable=True)
+    parent_payment_id: Mapped[Optional[UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("payments.id"), nullable=True)
     
     def to_dict(self) -> dict:
         return {

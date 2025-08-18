@@ -12,7 +12,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 ENV_PATH = os.path.join(BASE_DIR, '.env.production')
 load_dotenv(ENV_PATH)
 
-
 def parse_cors(value: str) -> List[str]:
     """
     Parses CORS origins. Accepts comma-separated string or list-like string.

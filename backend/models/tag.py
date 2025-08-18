@@ -2,8 +2,6 @@ from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy import String
 from core.database import Base, CHAR_LENGTH
 from sqlalchemy.dialects.postgresql import UUID
-
-
 import uuid
 
 class Tag(Base):

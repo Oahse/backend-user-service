@@ -3,9 +3,8 @@ from sqlalchemy import String, Text
 from core.database import Base, CHAR_LENGTH
 from typing import Optional
 from sqlalchemy.dialects.postgresql import UUID
-
-
 import uuid
+
 class Category(Base):
     __tablename__ = "categories"
 

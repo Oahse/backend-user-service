@@ -27,7 +27,7 @@ async def get_all_inventories(
         invs = await svc.get_all(name, location, limit, offset)
         return Response(data=[inv.to_dict() for inv in invs])
     except Exception as e:
-        return Response(data=str(e), code=500)
+        return Response(success=False, data=str(e), code=500)
 
 
 @router.get("/{inventory_id}")
@@ -39,7 +39,7 @@ async def get_inventory(inventory_id: UUID, db: AsyncSession = Depends(get_db)):
             return Response(message=f"Inventory with id '{inventory_id}' not found.", code=404)
         return Response(data=inv.to_dict())
     except Exception as e:
-        return Response(data=str(e), code=500)
+        return Response(success=False, data=str(e), code=500)
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -49,7 +49,7 @@ async def create_inventory(inventory_in: InventoryCreate, db: AsyncSession = Dep
         inv = await svc.create(inventory_in)
         return Response(data=inv.to_dict(), code=201)
     except Exception as e:
-        return Response(data=str(e), code=500)
+        return Response(success=False, data=str(e), code=500)
 
 
 @router.put("/{inventory_id}")
@@ -61,7 +61,7 @@ async def update_inventory(inventory_id: UUID, inventory_in: InventoryCreate, db
             return Response(message=f"Inventory with id '{inventory_id}' not found.", code=404)
         return Response(data=inv.to_dict())
     except Exception as e:
-        return Response(data=str(e), code=500)
+        return Response(success=False, data=str(e), code=500)
 
 
 @router.delete("/{inventory_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -73,5 +73,5 @@ async def delete_inventory(inventory_id: UUID, db: AsyncSession = Depends(get_db
             return Response(message=f"Inventory with id '{inventory_id}' not found.", code=404)
         return Response(message="Inventory deleted successfully", code=204)
     except Exception as e:
-        return Response(data=str(e), code=500)
+        return Response(success=False, data=str(e), code=500)
 

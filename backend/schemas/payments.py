@@ -45,8 +45,8 @@ class ParentPaymentSchema(BaseModel):
 
 class PaymentSchema(BaseModel):
     id: UUID
-    order_id: str
-    user_id: Optional[str] = None
+    order_id: UUID
+    user_id: Optional[UUID] = None
     method: PaymentMethod
     status: PaymentStatus = PaymentStatus.Pending
     amount: float
@@ -56,7 +56,7 @@ class PaymentSchema(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     refunded_amount: float = 0.0
-    parent_payment_id: Optional[str] = None
+    parent_payment_id: Optional[UUID] = None
     parent_payment: Optional[ParentPaymentSchema] = None
 
     class Config:

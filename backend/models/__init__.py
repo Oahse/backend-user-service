@@ -1,13 +1,14 @@
 # models/__init__.py
-from .user import User, Address
+from .user import User, Address,EmailChangeRequestModel
+from .category import Category
+from .orders import Order, OrderItem
+from .payments import Payment
+from .products import Product,ProductVariant,ProductVariantAttribute,ProductVariantImage
+from .promocode import PromoCode
+from .tag import Tag
 # import other models too...
 
 from core.database import Base,engine_db  # or wherever your Base is defined
 
-# Your async function for creating tables
-async def create_tables():
-    async with engine_db.begin() as conn:
-        # Ensure all models are in the Base
-        await conn.run_sync(Base.metadata.create_all)
 
-    print("Tables created successfully!")
+__all__ = ['User', 'Address','EmailChangeRequestModel',"Category", 'Order','OrderItem','Payment','Product','ProductVariant','ProductVariantAttribute','ProductVariantImage','PromoCode','Tag']

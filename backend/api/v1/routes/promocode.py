@@ -28,7 +28,7 @@ async def get_all_promocodes(
         res = await service.get_all(active, valid_on, code_contains, limit, offset)
         return Response(data=[p.to_dict() for p in res])
     except Exception as e:
-        return Response(data=str(e), code=500)
+        return Response(success=False, data=str(e), code=500)
 
 
 @router.get("/{promo_code_id}")
@@ -40,7 +40,7 @@ async def get_promocode_by_id(promo_code_id: UUID, db: AsyncSession = Depends(ge
             return Response(message=f"Promo code with id '{promo_code_id}' not found.", code=404)
         return Response(data=res.to_dict())
     except Exception as e:
-        return Response(data=str(e), code=500)
+        return Response(success=False, data=str(e), code=500)
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -50,7 +50,7 @@ async def create_promocode(promo_in: PromoCodeCreate, db: AsyncSession = Depends
         res = await service.create(promo_in)
         return Response(data=res.to_dict(), code=201)
     except Exception as e:
-        return Response(data=str(e), code=500)
+        return Response(success=False, data=str(e), code=500)
 
 
 @router.put("/{promo_code_id}")
@@ -62,7 +62,7 @@ async def update_promocode(promo_code_id: UUID, promo_in: PromoCodeCreate, db: A
             return Response(message=f"Promo code with id '{promo_code_id}' not found.", code=404)
         return Response(data=res.to_dict())
     except Exception as e:
-        return Response(data=str(e), code=500)
+        return Response(success=False, data=str(e), code=500)
 
 
 @router.delete("/{promo_code_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -74,4 +74,4 @@ async def delete_promocode(promo_code_id: UUID, db: AsyncSession = Depends(get_d
             return Response(message=f"Promo code with id '{promo_code_id}' not found.", code=404)
         return Response(message="Promo code deleted successfully", code=204)
     except Exception as e:
-        return Response(data=str(e), code=500)
+        return Response(success=False, data=str(e), code=500)
