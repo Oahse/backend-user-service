@@ -30,6 +30,12 @@ class Settings:
     DOMAIN: str = os.getenv('DOMAIN', 'localhost')
     ENVIRONMENT: Literal["local", "staging", "production"] = os.getenv('ENVIRONMENT', 'local')
 
+    KAFKA_BOOTSTRAP_SERVERS : List[str] = parse_cors(os.getenv('KAFKA_BOOTSTRAP_SERVERS', "[kafka:9092]"))
+    KAFKA_TOPIC: str = os.getenv('KAFKA_TOPIC', 'products_topic')
+    KAFKA_GROUP: str = os.getenv('KAFKA_GROUP', 'product_group')
+    KAFKA_HOST: str = os.getenv('KAFKA_HOST', 'kafka')
+    KAFKA_PORT: str = os.getenv('KAFKA_PORT', '9092')
+    
     # Redis
     REDIS_URL: str = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
     REDIS_CACHE_TTL: int = int(os.getenv('REDIS_CACHE_TTL', '3600'))  # default 3600 seconds (1 hour)

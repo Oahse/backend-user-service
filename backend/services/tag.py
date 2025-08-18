@@ -4,7 +4,6 @@ from sqlalchemy.future import select
 from typing import List, Optional
 from models.tag import (Tag, uuid, UUID)
 from schemas.tag import (TagCreate)
-from core.utils.response import NotFoundError
 
 class TagService:
     def __init__(self, db: AsyncSession):

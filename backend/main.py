@@ -19,13 +19,42 @@ from core.config import settings,logger
 from core.utils.response import Response, RequestValidationError
 from core.utils.messages import telegram
 from core.utils.redis import redis_client
-
+from core.utils.kafka import KafkaConsumer,KafkaProducer ,is_kafka_available
 import asyncio
+
+
+# Initialize Kafka consumer with broker(s), topic and group ID from settings
+kafka_consumer = KafkaConsumer(
+    broker=",".join(settings.KAFKA_BOOTSTRAP_SERVERS),
+    topic=str(settings.KAFKA_TOPIC),
+    group_id=str(settings.KAFKA_GROUP),
+    es=None
+)
+
+kafka_producer = KafkaProducer(broker=settings.KAFKA_BOOTSTRAP_SERVERS,
+                                topic=str(settings.KAFKA_TOPIC))
+
+consumer_task = None  # This will hold the asyncio task for consuming Kafka messages
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events."""
     # Startup
+    global consumer_task
+    kafka_host = settings.KAFKA_HOST
+    kafka_port = int(settings.KAFKA_PORT)
+    try:
+        await kafka_consumer.start()
+        consumer_task = asyncio.create_task(kafka_consumer.consume())
+
+    except Exception as e:
+        logger.critical(f"Failed to start Kafka consumer: {e}")
+        await kafka_consumer.stop()
+        await kafka_producer.stop()
+        
+    logger.info("App started")
+    
     asyncio.create_task(telegram.run_telegram_bot())
     logger.info("Bot is running...")
 
@@ -37,6 +66,12 @@ async def lifespan(app: FastAPI):
     await telegram.telegram_app.stop()
     logger.error("Bot stopped.")
     await redis_client.disconnect()
+
+    # Stop Kafka consumer gracefully
+    await kafka_consumer.stop()
+    logger.critical("Kafka consumer stopped.")
+    await kafka_producer.stop()
+    logger.critical("Kafka producer stopped.")
 
 app = FastAPI(
     title="Banwee API",
