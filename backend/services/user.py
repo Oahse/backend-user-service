@@ -4,7 +4,8 @@ Authentication service with user management and JWT token handling.
 import secrets,string, re
 from datetime import datetime, timedelta
 from typing import Optional,List
-from uuid import UUID
+from sqlalchemy.dialects.postgresql import UUID
+
 from sqlalchemy.orm import selectinload  # or use joinedload if you prefer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_

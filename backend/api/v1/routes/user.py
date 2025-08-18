@@ -15,10 +15,8 @@ from schemas.user import (
 router = APIRouter(prefix='/api/v1/users', tags=["Users"])
 security = HTTPBearer()
 
-
 def get_auth_service(db: AsyncSession = Depends(get_db)) -> AuthService:
     return AuthService(db)
-
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),

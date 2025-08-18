@@ -3,7 +3,8 @@ Security utilities for JWT token handling and password management.
 """
 from datetime import datetime, timedelta
 from typing import Optional, Union
-from uuid import UUID
+from sqlalchemy.dialects.postgresql import UUID
+
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import HTTPException, status, Depends

@@ -2,7 +2,8 @@ from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update, delete
-from uuid import UUID
+from sqlalchemy.dialects.postgresql import UUID
+
 from datetime import datetime
 from models.payments import Payment, PaymentStatus, PaymentMethod  # adjust import as needed
 

@@ -3,7 +3,6 @@ from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import and_, or_, update, delete
 from typing import List, Optional
-from core.utils.generator import generator
 from datetime import datetime, timedelta
 from models.promocode import (PromoCode, UUID, uuid)
 from schemas.promocode import (PromoCodeCreate)

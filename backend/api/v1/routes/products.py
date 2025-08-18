@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
-from core.database import get_db, get_elastic_db
+from core.database import get_db
 from services.products import ProductService, ProductVariantService,ProductVariantAttributeService, ProductVariantImageService
 from schemas.products import ProductCreate, ProductVariantCreate, ProductVariantUpdate,ProductVariantAttributeCreate,ProductVariantImageCreate
 from core.utils.response import Response
@@ -9,28 +9,28 @@ from models.products import AvailabilityStatus
 
 router = APIRouter(prefix="/api/v1/products", tags=["Products"])
 
-@router.get("/search")
-async def search_products(
-    q: Optional[str] = None,
-    name: Optional[str] = None,
-    category_id: Optional[str] = None,
-    tag_id: Optional[str] = None,
-    availability: Optional[AvailabilityStatus] = None,
-    min_price: Optional[float] = None,
-    max_price: Optional[float] = None,
-    min_rating: Optional[float] = None,
-    limit: int = 10,
-    offset: int = 0,
-    db: AsyncSession = Depends(get_db),
-):
-    esclient = await get_elastic_db()
-    service = ProductService(db, esclient)
-    try:
-        result = await service.search(q, name, category_id, tag_id, availability,
-                                      min_price, max_price, min_rating, limit, offset)
-        return Response(data=result)
-    except Exception as e:
-        return Response(success=False, message=str(e), code=500)
+# @router.get("/search")
+# async def search_products(
+#     q: Optional[str] = None,
+#     name: Optional[str] = None,
+#     category_id: Optional[str] = None,
+#     tag_id: Optional[str] = None,
+#     availability: Optional[AvailabilityStatus] = None,
+#     min_price: Optional[float] = None,
+#     max_price: Optional[float] = None,
+#     min_rating: Optional[float] = None,
+#     limit: int = 10,
+#     offset: int = 0,
+#     db: AsyncSession = Depends(get_db),
+# ):
+#     esclient = await get_elastic_db()
+#     service = ProductService(db, esclient)
+#     try:
+#         result = await service.search(q, name, category_id, tag_id, availability,
+#                                       min_price, max_price, min_rating, limit, offset)
+#         return Response(data=result)
+#     except Exception as e:
+#         return Response(success=False, message=str(e), code=500)
 
 
 @router.get("/")

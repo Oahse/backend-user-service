@@ -3,7 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy import update, delete,and_
-from uuid import UUID
+from sqlalchemy.dialects.postgresql import UUID
+
 from core.utils.generator import generator
 from models.orders import Order, OrderItem, OrderStatus  # adjust import
 from schemas.orders import OrderSchema, OrderItemSchema,UpdateOrderSchema,OrderFilterSchema

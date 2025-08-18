@@ -2,6 +2,7 @@ from sqlalchemy.orm import mapped_column, Mapped, relationship, validates
 from sqlalchemy import Enum, Integer, String, DateTime, ForeignKey, Boolean, Text, DECIMAL, Table, Column
 from core.database import Base, CHAR_LENGTH
 from sqlalchemy.dialects.postgresql import UUID
+
 import uuid
 from datetime import datetime
 from enum import Enum as PyEnum

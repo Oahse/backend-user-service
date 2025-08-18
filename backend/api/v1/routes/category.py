@@ -7,6 +7,8 @@ from services.category import CategoryService
 from schemas.category import CategoryCreate, CategoryRead
 from core.utils.response import NotFoundError, Response
 from sqlalchemy.dialects.postgresql import UUID
+
+
 import uuid
 
 router = APIRouter(prefix="/api/v1/categories", tags=["Categories"])

@@ -5,7 +5,6 @@ from sqlalchemy.orm import selectinload
 from fastapi import BackgroundTasks, HTTPException
 from typing import List, Optional
 from datetime import datetime
-from core.database import get_elastic_db
 import json
 from models.products import UUID, uuid, Product, ProductVariant, ProductVariantImage, ProductVariantAttribute, AvailabilityStatus, Tag, InventoryProduct
 from schemas.products import ProductCreate, ProductVariantCreate, ProductVariantUpdate, ProductVariantRead, ProductVariantAttributeCreate, ProductVariantImageCreate
@@ -54,64 +53,64 @@ class ProductService:
         result = await self.db.execute(select(Tag).where(Tag.id.in_(tag_ids)))
         return result.scalars().all()
 
-    async def search(
-        self,
-        q: Optional[str] = None,
-        name: Optional[str] = None,
-        category_id: Optional[str] = None,
-        tag_id: Optional[str] = None,
-        availability: Optional[AvailabilityStatus] = None,
-        min_price: Optional[float] = None,
-        max_price: Optional[float] = None,
-        min_rating: Optional[float] = None,
-        limit: int = 10,
-        offset: int = 0,
-    ) -> List:
-        try:
-            must_clauses = []
+    # async def search(
+    #     self,
+    #     q: Optional[str] = None,
+    #     name: Optional[str] = None,
+    #     category_id: Optional[str] = None,
+    #     tag_id: Optional[str] = None,
+    #     availability: Optional[AvailabilityStatus] = None,
+    #     min_price: Optional[float] = None,
+    #     max_price: Optional[float] = None,
+    #     min_rating: Optional[float] = None,
+    #     limit: int = 10,
+    #     offset: int = 0,
+    # ) -> List:
+    #     try:
+    #         must_clauses = []
 
-            if q:
-                must_clauses.append({
-                    "multi_match": {
-                        "query": q,
-                        "fields": ["name", "description"]
-                    }
-                })
+    #         if q:
+    #             must_clauses.append({
+    #                 "multi_match": {
+    #                     "query": q,
+    #                     "fields": ["name", "description"]
+    #                 }
+    #             })
 
-            if name:
-                must_clauses.append({"match": {"name": name}})
+    #         if name:
+    #             must_clauses.append({"match": {"name": name}})
 
-            if category_id:
-                must_clauses.append({"term": {"category_id": category_id}})
-            if tag_id:
-                must_clauses.append({"term": {"tag_ids": tag_id}})
-            if availability:
-                must_clauses.append({"term": {"availability": availability.value}})
-            if min_price is not None or max_price is not None:
-                range_query = {}
-                if min_price is not None:
-                    range_query["gte"] = min_price
-                if max_price is not None:
-                    range_query["lte"] = max_price
-                must_clauses.append({"range": {"base_price": range_query}})
-            if min_rating is not None:
-                must_clauses.append({"range": {"rating": {"gte": min_rating}}})
+    #         if category_id:
+    #             must_clauses.append({"term": {"category_id": category_id}})
+    #         if tag_id:
+    #             must_clauses.append({"term": {"tag_ids": tag_id}})
+    #         if availability:
+    #             must_clauses.append({"term": {"availability": availability.value}})
+    #         if min_price is not None or max_price is not None:
+    #             range_query = {}
+    #             if min_price is not None:
+    #                 range_query["gte"] = min_price
+    #             if max_price is not None:
+    #                 range_query["lte"] = max_price
+    #             must_clauses.append({"range": {"base_price": range_query}})
+    #         if min_rating is not None:
+    #             must_clauses.append({"range": {"rating": {"gte": min_rating}}})
 
-            query_body = {
-                "query": {
-                    "bool": {
-                        "must": must_clauses or [{"match_all": {}}]
-                    }
-                },
-                "from": offset,
-                "size": limit
-            }
+    #         query_body = {
+    #             "query": {
+    #                 "bool": {
+    #                     "must": must_clauses or [{"match_all": {}}]
+    #                 }
+    #             },
+    #             "from": offset,
+    #             "size": limit
+    #         }
 
-            result = await self.es.search(index="products", query=query_body["query"], from_=offset, size=limit)
+    #         result = await self.es.search(index="products", query=query_body["query"], from_=offset, size=limit)
 
-            return [hit["_source"] for hit in result["hits"]["hits"]]
-        except Exception as e:
-            raise e
+    #         return [hit["_source"] for hit in result["hits"]["hits"]]
+    #     except Exception as e:
+    #         raise e
 
     async def get_all(
         self,

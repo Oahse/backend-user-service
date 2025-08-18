@@ -11,6 +11,8 @@ from datetime import datetime
 from enum import Enum as PyEnum
 from typing import List
 from sqlalchemy.dialects.postgresql import UUID
+
+
 import uuid
 from core.database import Base, CHAR_LENGTH
 
