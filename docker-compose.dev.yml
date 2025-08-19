@@ -151,31 +151,6 @@ services:
           cpus: '0.1'
           memory: 100M
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
-    container_name: frontend
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules  # prevent node_modules from being overwritten
-    ports:
-      - "5173:5173"
-    networks:
-      - webnet
-    restart: unless-stopped
-    environment:
-      - VITE_API_URL=http://localhost:8000
-    deploy:
-      resources:
-        limits:
-          cpus: '0.2'
-          memory: 200M
-        reservations:
-          cpus: '0.1'
-          memory: 100M
-    # command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
-
 networks:
   webnet:
     driver: bridge

@@ -80,11 +80,11 @@ services:
           cpus: '0.15'
           memory: 150M
 
-  userservice:
+  backend:
     build:
       context: ./backend
       dockerfile: Dockerfile.prod
-    container_name: userservice
+    container_name: backend
     volumes:
       - ./backend:/usr/src/app  # live code changes
       - /usr/src/app/__pycache__  # exclude pycache from volume mount
@@ -152,34 +152,6 @@ services:
           cpus: '0.1'
           memory: 100M
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.prod
-    container_name: frontend
-    networks:
-      - webnet
-    expose:
-      - "80"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules  # prevent node_modules from being overwritten
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    deploy:
-      resources:
-        limits:
-          cpus: '0.2'
-          memory: 200M
-        reservations:
-          cpus: '0.1'
-          memory: 100M
-
   nginx:
     image: nginx:alpine
     container_name: nginx
@@ -192,7 +164,7 @@ services:
       - ./nginx/www:/var/www/html
       - nginx-cache:/var/cache/nginx
     depends_on:
-      userservice:
+      backend:
         condition: service_healthy
       frontend:
         condition: service_healthy
