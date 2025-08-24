@@ -42,20 +42,23 @@ class ProductVariantImageRead(ProductVariantImageBase):
         from_attributes = True
 
 class ProductVariantBase(BaseModel):
-    price: float
+    name: str = ''
+    base_price: condecimal(max_digits=10, decimal_places=2)
+    sale_price: Optional[condecimal(max_digits=10, decimal_places=2)] = None
     stock: int = 0
-    variant_name: str
 
 
 # --- Create ---
 class ProductVariantCreate(ProductVariantBase):
-    attributes: Optional[List[ProductVariantAttributeCreate]] = []
-    images: Optional[List[ProductVariantImageCreate]] = []
+    
+    attributes: List[ProductVariantAttributeCreate]
+    images: List[ProductVariantImageCreate]
 
 
 # --- Update ---
 class ProductVariantUpdate(BaseModel):
-    price: Optional[float]
+    base_price: Optional[condecimal(max_digits=10, decimal_places=2)] = 0.0
+    sale_price: Optional[condecimal(max_digits=10, decimal_places=2)] = 0.0
     stock: Optional[int]
     attributes: Optional[List[ProductVariantAttributeCreate]] = []
     images: Optional[List[ProductVariantImageCreate]] = []
@@ -74,8 +77,6 @@ class ProductVariantRead(ProductVariantBase):
 class ProductBase(BaseModel):
     name: str = Field(..., max_length=100)
     description: Optional[str] = None
-    base_price: condecimal(max_digits=10, decimal_places=2)
-    sale_price: Optional[condecimal(max_digits=10, decimal_places=2)] = None
     availability: AvailabilityStatus = AvailabilityStatus.IN_STOCK
     rating: Optional[condecimal(max_digits=2, decimal_places=1)] = 0.0
     category_id: UUID
@@ -83,7 +84,7 @@ class ProductBase(BaseModel):
     inventory_ids: Optional[List[UUID]] = []  # <-- changed from inventory_id
 
 class ProductCreate(ProductBase):
-    variants: Optional[List[ProductVariantCreate]] = []
+    variants: List[ProductVariantCreate]
 
 class ProductRead(ProductBase):
     id: UUID

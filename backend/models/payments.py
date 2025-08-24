@@ -30,7 +30,6 @@ class PaymentMethod(PyEnum):
     Other = "Other"
 
 
-
 class PaymentStatus(PyEnum):
     Pending = "Pending"
     Completed = "Completed"

@@ -14,8 +14,8 @@ class PromoCode(Base):
     code: Mapped[str] = mapped_column(String(50), unique=True, index=True)
     discount_percent: Mapped[float] = mapped_column(DECIMAL(5, 2), index=True)
     active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
-    valid_from: Mapped[datetime] = mapped_column(DateTime, index=True)
-    valid_until: Mapped[datetime] = mapped_column(DateTime, index=True)
+    valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    valid_until: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
 
     def to_dict(self):
         return {

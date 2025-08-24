@@ -37,9 +37,6 @@ class Product(Base):
 
     tags: Mapped[List["Tag"]] = relationship("Tag", secondary=product_tags, backref="products")
 
-    base_price: Mapped[float] = mapped_column(DECIMAL(10, 2))
-    sale_price: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 2), nullable=True)
-
     availability: Mapped[AvailabilityStatus] = mapped_column(Enum(AvailabilityStatus), default=AvailabilityStatus.IN_STOCK, index=True)
 
     rating: Mapped[Optional[float]] = mapped_column(DECIMAL(2, 1), default=0.0)
@@ -66,8 +63,6 @@ class Product(Base):
             "category_id": self.category_id,
             "category": self.category.name if self.category else None,
             "tags": [tag.to_dict() for tag in self.tags],
-            "base_price": float(self.base_price),
-            "sale_price": float(self.sale_price) if self.sale_price else None,
             "availability": self.availability.value if self.availability else None,
             "rating": float(self.rating) if self.rating else 0.0,
             "created_at": self.created_at.isoformat(),
@@ -88,9 +83,12 @@ class ProductVariant(Base):
     product: Mapped["Product"] = relationship("Product", back_populates="variants")
 
     sku: Mapped[str] = mapped_column(String(100), unique=True, index=True)
-    price: Mapped[float] = mapped_column(DECIMAL(10, 2))
+    name: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    base_price: Mapped[float] = mapped_column(DECIMAL(10, 2))
+    sale_price: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 2), nullable=True)
+
     stock: Mapped[int] = mapped_column(Integer, default=0)
-    barcode: Mapped[Optional[str]] = mapped_column(String(100), unique=True)
+    barcode: Mapped[Optional[str]] = mapped_column(Text, unique=True)
 
     attributes: Mapped[List["ProductVariantAttribute"]] = relationship("ProductVariantAttribute", back_populates="variant", cascade="all, delete-orphan", lazy="selectin")
     images: Mapped[List["ProductVariantImage"]] = relationship("ProductVariantImage", back_populates="variant", cascade="all, delete-orphan", lazy="selectin")
@@ -99,10 +97,11 @@ class ProductVariant(Base):
     def to_dict(self):
         return {
             "id": self.id,
+            'name':self.name,
             "product_id": self.product_id,
-
+            "base_price": float(self.base_price),
+            "sale_price": float(self.sale_price) if self.sale_price else None,
             "sku": self.sku,
-            "price": float(self.price),
             "stock": self.stock,
             "barcode": self.barcode,
             "attributes": [attr.to_dict() for attr in self.attributes],
@@ -111,7 +110,6 @@ class ProductVariant(Base):
 
     def __repr__(self):
         return f"<ProductVariant(id={self.id!r}, name={self.name!r}, value={self.value!r}, sku={self.sku!r})>"
-
 
 class ProductVariantAttribute(Base):
     __tablename__ = "product_variant_attributes"
@@ -131,7 +129,6 @@ class ProductVariantAttribute(Base):
             "value": self.value,
         }
 
-
 class ProductVariantImage(Base):
     __tablename__ = "product_variant_images"
 
@@ -149,7 +146,6 @@ class ProductVariantImage(Base):
             "url": self.url,
             "alt_text": self.alt_text,
         }
-
 
 # --- Inventory Model ---
 class Inventory(Base):

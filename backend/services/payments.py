@@ -1,10 +1,10 @@
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update, delete,and_
+from sqlalchemy import and_
 from uuid import UUID
-
 from datetime import datetime
+
 from models.payments import Payment, PaymentStatus, PaymentMethod  # adjust import as needed
 
 
@@ -39,11 +39,13 @@ class PaymentService:
                 refunded_amount=refunded_amount,
             )
             self.db.add(payment)
-            await self.db.flush()  # flush to get ID if needed
+            await self.db.flush()  # flush to assign PK
+            await self.db.commit()
+            await self.db.refresh(payment)
             return payment
         except Exception as e:
             await self.db.rollback()
-            raise e
+            raise RuntimeError(f"Failed to create payment: {e}") from e
 
     async def get_payment(self, payment_id: UUID) -> Optional[Payment]:
         result = await self.db.execute(select(Payment).where(Payment.id == payment_id))
@@ -52,41 +54,41 @@ class PaymentService:
     async def update_payment(
         self,
         payment_id: UUID,
-        **kwargs
+        updates: Dict[str, Any],
     ) -> Optional[Payment]:
-        # Fetch existing payment
         payment = await self.get_payment(payment_id)
         if not payment:
-            raise Exception("Payment not found")
+            raise ValueError(f"Payment with id {payment_id} not found")
+
         try:
-            # Update attributes
-            for key, value in kwargs.items():
+            for key, value in updates.items():
                 if hasattr(payment, key):
                     setattr(payment, key, value)
-
             await self.db.flush()
+            await self.db.commit()
+            await self.db.refresh(payment)
             return payment
         except Exception as e:
             await self.db.rollback()
-            raise e
+            raise RuntimeError(f"Failed to update payment: {e}") from e
 
     async def delete_payment(self, payment_id: UUID) -> bool:
-        
         payment = await self.get_payment(payment_id)
         if not payment:
-            raise Exception("Payment not found")
+            raise ValueError(f"Payment with id {payment_id} not found")
+
         try:
             await self.db.delete(payment)
             await self.db.commit()
             return True
         except Exception as e:
             await self.db.rollback()
-            raise e
+            raise RuntimeError(f"Failed to delete payment: {e}") from e
 
     async def get_all(
         self,
         order_id: Optional[UUID] = None,
-        user_id: Optional[UUID] = None,
+        user_id: Optional[str] = None,
         method: Optional[PaymentMethod] = None,
         status: Optional[PaymentStatus] = None,
         amount: Optional[float] = None,
@@ -139,5 +141,5 @@ class PaymentService:
             return payments
 
         except Exception as e:
-            await self.db.rollback()
-            raise e
+            # No rollback on reads
+            raise RuntimeError(f"Failed to fetch payments: {e}") from e

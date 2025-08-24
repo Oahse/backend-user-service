@@ -11,7 +11,6 @@ from core.utils.response import Response
 
 router = APIRouter(prefix="/api/v1/orders", tags=["Orders"])
 
-
 # --- Order Routes --- #
 
 @router.post("/", status_code=status.HTTP_201_CREATED)

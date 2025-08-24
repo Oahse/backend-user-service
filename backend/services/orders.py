@@ -6,11 +6,12 @@ from sqlalchemy import update, delete,and_
 from models.orders import Order, OrderItem, OrderStatus  # adjust import
 from schemas.orders import OrderSchema, OrderItemSchema,UpdateOrderSchema,OrderFilterSchema, UUID
 from core.config import settings
-from core.utils.kafka import KafkaProducer, send_kafka_message, is_kafka_available
+# from core.utils.kafka import KafkaProducer, send_kafka_message, is_kafka_available
 from datetime import datetime
+from api.v1.websockets.analytics import broadcast_to_admins
 
-kafka_producer = KafkaProducer(broker=settings.KAFKA_BOOTSTRAP_SERVERS,
-                                topic=str(settings.KAFKA_TOPIC))
+# kafka_producer = KafkaProducer(broker=settings.KAFKA_BOOTSTRAP_SERVERS,
+#                                 topic=str(settings.KAFKA_TOPIC))
 
 class OrderService:
     def __init__(self, db: AsyncSession):
@@ -47,12 +48,20 @@ class OrderService:
             order = await self.get_order_by_id(order.id)
             
             # Kafka background task
-            await kafka_producer.start()
-            await kafka_producer.send({
-                    "order": order.to_dict(),
-                    "action": "create"
+            # await kafka_producer.start()
+            # await kafka_producer.send({
+            #         "order": order.to_dict(),
+            #         "action": "create"
+            #     })
+            # await kafka_producer.stop()
+            
+
+            # When a new order is placed
+            await broadcast_to_admins({
+                    "type": "new_order",
+                    "order_id": order.id,
+                    "total": len(order_in.items),
                 })
-            await kafka_producer.stop()
             await self.db.refresh(order)
             return order
         except Exception as e:
@@ -115,7 +124,19 @@ class OrderService:
             await self.db.rollback()
             raise e
 
-
+    async def update_order_status(self, order_id: UUID, status: str):
+        order = await self.get_order_by_id(order_id)
+        if not order:
+            raise Exception("Order not found")
+        try:
+            order.status = status
+            await self.db.commit()
+            await self.db.refresh(order)
+            return order
+        
+        except Exception as e:
+            await self.db.rollback()
+            raise e
     async def delete_order(self, order_id: UUID) -> bool:
         order = await self.get_order_by_id(order_id)
         if not order:

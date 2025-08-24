@@ -16,7 +16,7 @@ async def create_payment(
     amount: float,
     currency: str,
     method: PaymentMethod,
-    user_id: Optional[str] = None,
+    user_id: UUID,
     transaction_id: Optional[str] = None,
     gateway_response: Optional[str] = None,
     parent_payment_id: Optional[str] = None,

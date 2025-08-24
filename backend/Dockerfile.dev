@@ -20,6 +20,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
+
+
 # Download wait-for-it.sh
 RUN curl -sSL https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh \
     -o /usr/local/bin/wait-for-it.sh && chmod +x /usr/local/bin/wait-for-it.sh

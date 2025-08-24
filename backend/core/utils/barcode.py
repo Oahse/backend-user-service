@@ -51,6 +51,7 @@ class Barcode:
         # Generate the barcode
         code128 = barcode.get_barcode_class('code128')
         barcode_instance = code128(data, writer=ImageWriter())
+        barcode_instance.default_writer_options['write_text'] = False  # Disable text rendering
 
         # Create an image from the barcode
         buffered = io.BytesIO()

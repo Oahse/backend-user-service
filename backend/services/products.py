@@ -10,18 +10,49 @@ from models.products import uuid, Product, ProductVariant, ProductVariantImage, 
 from schemas.products import UUID, ProductCreate, ProductVariantCreate, ProductVariantUpdate, ProductVariantRead, ProductVariantAttributeCreate, ProductVariantImageCreate
 from services.category import CategoryService
 from core.config import settings
-from core.utils.kafka import KafkaProducer, send_kafka_message, is_kafka_available
+# from core.utils.kafka import KafkaProducer, send_kafka_message, is_kafka_available
 from core.utils.barcode import Barcode
 from core.utils.file import ImageFile, GoogleDrive  # Assuming your classes are in utils.py
 
-kafka_producer = KafkaProducer(broker=settings.KAFKA_BOOTSTRAP_SERVERS,
-                               topic=str(settings.KAFKA_TOPIC))
-
+# kafka_producer = KafkaProducer(broker=settings.KAFKA_BOOTSTRAP_SERVERS,
+#                                topic=str(settings.KAFKA_TOPIC))
+# {
+#   "name": "meat",
+#   "description": "string",
+#   "availability": "In Stock",
+#   "rating": 4,
+#   "category_id": "2efda4e2-fbb9-45a8-bd62-a3995b3a71d4",
+#   "tag_ids": ["c2cd9eb5-65a0-4a79-8349-3c09a4444176"],
+#   "inventory_ids": [],
+#   "variants": [
+#     {
+#       "base_price": 100,
+#       "sale_price": 90,
+#       "stock": 100,
+#       "attributes": [
+#         {"name": "color", "value": "Red"},
+#         {"name": "size", "value": "M"}
+#       ],
+#       "images": [
+#         {"url": "https://cdn.jsdelivr.net/gh/Oahse/media@main/banwee.webp"}
+#       ]
+#     },
+#     {
+#       "base_price": 100,
+#       "sale_price": 90,
+#       "stock": 50,
+#       "attributes": [
+#         {"name": "color", "value": "Blue"},
+#         {"name": "size", "value": "L"}
+#       ],
+#       "images": []
+#     }
+#   ]
+# }
 
 def generate_barcode(data, logo_path=None, filename='barcode.png', save_as_png=False):
     barcode = Barcode()
     return barcode.generate_barcode(data=data, logo_path=logo_path, filename=filename, save_as_png=save_as_png)
-
 
 def generate_sku(product_name: str, variant_name: str, unique_id: UUID) -> str:
     product_code = ''.join(product_name.upper().split())[:3]
@@ -30,6 +61,11 @@ def generate_sku(product_name: str, variant_name: str, unique_id: UUID) -> str:
     sku = f"{product_code}-{variant_code}-{suffix}"
     return sku
 
+def generate_variant_name(attributes):
+    if not attributes:
+        return "VARIANT-UNKNOWN"
+    # Sort attributes by "name" for consistency
+    return " - ".join(f"{attr.name}: {attr.value}" for attr in attributes)
 
 async def upload_image_to_drive(base64_str: str, filename: str, quality: int = 30) -> str:
     google_drive = GoogleDrive(jsonkey=settings.google_service_account_info)
@@ -191,8 +227,6 @@ class ProductService:
             id=pid,
             name=product_in.name,
             description=product_in.description,
-            base_price=product_in.base_price,
-            sale_price=product_in.sale_price,
             availability=AvailabilityStatus(product_in.availability),
             rating=product_in.rating or 0.0,
             category_id=product_in.category_id,
@@ -205,33 +239,40 @@ class ProductService:
 
             for variant_in in product_in.variants or []:
                 vid = uuid.uuid4()
-                sku = generate_sku(product_in.name, variant_in.variant_name, vid)
+                variant_name = generate_variant_name(variant_in.attributes)
+                sku = generate_sku(product_in.name, variant_name, vid)
                 barcode_data = json.dumps({
                     'id': str(vid),
                     'product_id': str(pid),
                     'sku': sku,
-                    'price': variant_in.price,
-                    'stock': variant_in.stock
+                    'base_price': float(variant_in.base_price),
+                    'sale_price': float(variant_in.sale_price), 
+                    'stock': (variant_in.stock)
                 })
-                barcode_str = str(generate_barcode(barcode_data, filename=f'{vid}.png'))
+                # barcode_str = str(generate_barcode(barcode_data, filename=f'{vid}.png'))
+                # variant_name = generate_variant_name(variant_in.attributes)
 
                 variant = ProductVariant(
                     id=vid,
                     product_id=pid,
                     sku=sku,
-                    price=variant_in.price,
+                    base_price=variant_in.base_price,
+                    sale_price=variant_in.sale_price,
                     stock=variant_in.stock,
-                    barcode=barcode_str,
-                    variant_name=variant_in.variant_name,
+                    barcode=str(generate_barcode(barcode_data, filename=f'{vid}.png')),
+                    name=variant_name,
                 )
                 self.db.add(variant)
-
+                # Handle attributes
+                for attr in variant_in.attributes:
+                    v_attribute = ProductVariantAttribute(variant_id=vid,name=attr.name, value=attr.value)
+                    self.db.add(v_attribute)
+                
                 # Upload images and add them
-                for i, image in enumerate(variant_in.images or []):
-                    url = await upload_image_to_drive(image, f"{vid}_{i}.webp", quality=30)
+                for image in variant_in.images:
                     v_image = ProductVariantImage(
                         variant_id=vid,
-                        url=url,
+                        url=image.url,
                         alt_text=sku
                     )
                     self.db.add(v_image)
@@ -285,9 +326,10 @@ class ProductService:
             for variant_in in product_in.variants or []:
                 if getattr(variant_in, "id", None) in existing_variants:
                     variant = existing_variants[variant_in.id]
-                    variant.price = variant_in.price
+                    variant.base_price=variant_in.base_price,
+                    variant.sale_price=variant_in.sale_price,
                     variant.stock = variant_in.stock
-                    variant.variant_name = variant_in.variant_name
+                    variant.name = generate_variant_name(variant_in.attributes)
 
                     # Remove existing images, re-add new ones (simplified logic)
                     await self.db.execute(delete(ProductVariantImage).where(ProductVariantImage.variant_id == variant.id))
@@ -301,12 +343,15 @@ class ProductService:
                         self.db.add(v_image)
                 else:
                     vid = uuid.uuid4()
-                    sku = generate_sku(product.name, variant_in.variant_name, vid)
+                    variant_name=generate_variant_name(variant_in.attributes)
+                    sku = generate_sku(product.name, variant_name, vid)
                     barcode_data = json.dumps({
                         'id': str(vid),
                         'product_id': str(product_id),
                         'sku': sku,
-                        'price': variant_in.price,
+                        'base_price':variant_in.base_price,
+                        'sale_price':variant_in.sale_price,
+                        'name' : variant_name,
                         'stock': variant_in.stock
                     })
                     barcode_str = str(generate_barcode(barcode_data, filename=f'{vid}.png'))
@@ -314,18 +359,23 @@ class ProductService:
                         id=vid,
                         product_id=product_id,
                         sku=sku,
-                        price=variant_in.price,
+                        base_price=variant_in.base_price,
+                        sale_price=variant_in.sale_price,
                         stock=variant_in.stock,
                         barcode=barcode_str,
-                        variant_name=variant_in.variant_name,
+                        name=variant_name,
                     )
                     self.db.add(variant)
-
-                    for i, image in enumerate(variant_in.images or []):
-                        url = await upload_image_to_drive(image, f"{vid}_{i}.webp", quality=30)
+                    # Handle attributes
+                    for attr in variant_in.attributes:
+                        v_attribute = ProductVariantAttribute(name=attr.name, value=attr.value)
+                        self.db.add(v_attribute)
+                        
+                    for image in variant_in.images:
+                        # url = await upload_image_to_drive(image, f"{vid}_{i}.webp", quality=30)
                         v_image = ProductVariantImage(
                             variant_id=vid,
-                            url=url,
+                            url=image.url,
                             alt_text=sku
                         )
                         self.db.add(v_image)
@@ -363,32 +413,36 @@ class ProductVariantService:
             raise Exception("Product not found")
         
         vid=uuid.uuid4
-        sku=generate_sku(product_name, variant_in.variant_name, vid)
+        variant_name = generate_variant_name(variant_in.attributes)
+        sku=generate_sku(product_name, variant_name, vid)
         variant = ProductVariant(
             id=vid,
             product_id=product_id,
-            variant_name=variant_in.variant_name,
+            name=variant_name,
             sku=sku,
-            price=variant_in.price,
+            base_price=variant_in.base_price,
+            sale_price=variant_in.sale_price,
             stock=variant_in.stock,
             barcode=str(generate_barcode(json.dumps({
                     'id':vid,
                     'product_id':product_id,
                     'sku':sku,
-                    'price':variant_in.price,
+                    'base_price':variant_in.base_price,
+                    'sale_price':variant_in.sale_price,
                     'stock':variant_in.stock
                 }), 
                 logo_path=None, 
                 filename=f'{vid}.png', 
                 save_as_png=False)
-            )
+            ),
+            
         )
 
         # Handle attributes
         for attr in variant_in.attributes or []:
 
             variant.attributes.append(
-                ProductVariantAttribute(variant_id=vid,name=attr.name, value=attr.value)
+                ProductVariantAttribute(name=attr.name, value=attr.value)
             )
 
         # Handle images
@@ -422,7 +476,7 @@ class ProductVariantService:
         self,
         product_id: Optional[UUID] = None,
         sku: Optional[str] = None,
-        variant_name: Optional[str] = None,
+        name: Optional[str] = None,
         min_price: Optional[float] = None,
         max_price: Optional[float] = None,
         min_stock: Optional[int] = None,
@@ -436,12 +490,12 @@ class ProductVariantService:
             filters.append(ProductVariant.product_id == product_id)
         if sku:
             filters.append(ProductVariant.sku == sku)
-        if variant_name:
-            filters.append(ProductVariant.variant_name.ilike(f"%{variant_name}%"))
+        if name:
+            filters.append(ProductVariant.name.ilike(f"%{name}%"))
         if min_price is not None:
-            filters.append(ProductVariant.price >= min_price)
+            filters.append(ProductVariant.base_price >= min_price)
         if max_price is not None:
-            filters.append(ProductVariant.price <= max_price)
+            filters.append(ProductVariant.base_price <= max_price)
         if min_stock is not None:
             filters.append(ProductVariant.stock >= min_stock)
 
