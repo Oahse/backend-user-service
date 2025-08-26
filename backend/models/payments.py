@@ -4,10 +4,10 @@ from enum import Enum as PyEnum
 from datetime import datetime
 from typing import Optional
 from sqlalchemy.dialects.postgresql import UUID
-
+from core.database import Base, CHAR_LENGTH
+from models.currency import Currency
 
 import uuid
-from core.database import Base, CHAR_LENGTH
 
 class PaymentMethod(PyEnum):
     CreditCard = "CreditCard"
@@ -29,7 +29,6 @@ class PaymentMethod(PyEnum):
     StoreCredit = "StoreCredit"      # Internal credit or loyalty points
     Other = "Other"
 
-
 class PaymentStatus(PyEnum):
     Pending = "Pending"
     Completed = "Completed"
@@ -39,22 +38,22 @@ class PaymentStatus(PyEnum):
     Authorized = "Authorized"
     Voided = "Voided"
 
-
 class Payment(Base):
     __tablename__ = "payments"
 
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    order_id: Mapped[Optional[str]] = mapped_column(String(CHAR_LENGTH), nullable=True, index=True)
+    order_id: Mapped[UUID] = mapped_column(ForeignKey("orders.id"), nullable=False, index=True)
     
-    user_id: Mapped[Optional[str]] = mapped_column(String(CHAR_LENGTH), nullable=True, index=True)
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
 
     method: Mapped[PaymentMethod] = mapped_column(Enum(PaymentMethod), nullable=False, index=True)
     status: Mapped[PaymentStatus] = mapped_column(Enum(PaymentStatus), default=PaymentStatus.Pending, nullable=False, index=True)
 
-    amount: Mapped[DECIMAL] = mapped_column(DECIMAL(18, 8), nullable=False)  # high precision for currency
-    currency: Mapped[str] = mapped_column(String(10), nullable=False, index=True)  # ISO 4217 e.g. USD, EUR, JPY
+    amount: Mapped[DECIMAL] = mapped_column(DECIMAL(18, 8), nullable=False, index=True)  # high precision for currency
+    currency: Mapped[UUID] = mapped_column(ForeignKey("currencies.id"), nullable=False, index=True)  # ISO 4217 e.g. USD, EUR, JPY
+    currency_rel: Mapped["Currency"] = relationship("Currency", lazy="joined")
 
-    transaction_id: Mapped[Optional[str]] = mapped_column(String(CHAR_LENGTH), nullable=True)  # from payment gateway
+    transaction_id: Mapped[Optional[str]] = mapped_column(String(CHAR_LENGTH), nullable=True, index=True)  # from payment gateway
 
     # Payment gateway raw response or notes (JSON/text)
     gateway_response: Mapped[Optional[Text]] = mapped_column(Text, nullable=True)
@@ -75,7 +74,7 @@ class Payment(Base):
             "method": self.method.value if self.method else None,
             "status": self.status.value if self.status else None,
             "amount": float(self.amount) if self.amount is not None else None,
-            "currency": self.currency,
+            "currency": self.currency_rel.symbol if self.currency_rel else None,
             "transaction_id": self.transaction_id,
             "gateway_response": self.gateway_response,
             "created_at": self.created_at.isoformat() if self.created_at else None,
@@ -84,4 +83,4 @@ class Payment(Base):
             "parent_payment_id": self.parent_payment_id,
         }
     def __repr__(self):
-        return f"<Payment(id={self.id}, order_id={self.order_id}, method={self.method}, status={self.status}, amount={self.amount} {self.currency})>"
+        return f"<Payment(id={self.id}, order_id={self.order_id}, method={self.method}, status={self.status}, amount={self.currency}{self.amount})>"

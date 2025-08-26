@@ -28,7 +28,7 @@ class OrderSchema(BaseModel):
     user_id: UUID
     status: OrderStatus
     total_amount: float
-    currency: str = Field(default="USD")
+    currency: str = Field(default="£")
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     items: List[OrderItemSchema] = []

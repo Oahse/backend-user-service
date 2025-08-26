@@ -1,18 +1,15 @@
 from sqlalchemy.orm import mapped_column, Mapped, relationship, validates
 from sqlalchemy import Enum, Integer, String, DateTime, ForeignKey, Boolean, Text, DECIMAL, Table, Column
-from core.database import Base, CHAR_LENGTH
+from sqlalchemy.dialects.postgresql import UUID
+
 from datetime import datetime
 from enum import Enum as PyEnum
 from typing import List, Optional, Dict, Any
 
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, ForeignKey, DateTime, Enum, Integer, Float, Text
-from datetime import datetime
-from enum import Enum as PyEnum
-from typing import List
-from sqlalchemy.dialects.postgresql import UUID
-import uuid
 from core.database import Base, CHAR_LENGTH
+from models.currency import Currency
+
+import uuid
 
 class OrderStatus(PyEnum):
     Pending = "Pending"
@@ -31,7 +28,8 @@ class Order(Base):
     status: Mapped[OrderStatus] = mapped_column(Enum(OrderStatus), default=OrderStatus.Pending, nullable=False, index=True)
 
     total_amount: Mapped[float] = mapped_column(nullable=False)
-    currency: Mapped[str] = mapped_column(String(10), default="USD", index=True)
+    currency: Mapped[UUID] = mapped_column(ForeignKey("currencies.id"), nullable=False, index=True)
+    currency_rel: Mapped["Currency"] = relationship("Currency", lazy="joined")
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, index=True)
@@ -45,28 +43,25 @@ class Order(Base):
             "user_id": self.user_id,
             "status": self.status.value,
             "total_amount": self.total_amount,
-            "currency": self.currency,
+            "currency": self.currency_rel.symbol if self.currency_rel else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "items": [item.to_dict() for item in self.items],
         }
     def __repr__(self):
-        return f"<Order(id={self.id}, user_id={self.user_id}, status={self.status}, total={self.total_amount})>"
-
+        return f"<Order(id={self.id}, user_id={self.user_id}, status={self.status}, total={self.currency}{self.total_amount})>"
 
 class OrderItem(Base):
     __tablename__ = "order_items"
 
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    
     order_id: Mapped[str] = mapped_column(ForeignKey("orders.id"), nullable=False)
     order: Mapped["Order"] = relationship("Order", back_populates="items")
-
     product_id: Mapped[str] = mapped_column(String(CHAR_LENGTH), nullable=False, index=True)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     price_per_unit: Mapped[float] = mapped_column(nullable=False, index=True)
-
     total_price: Mapped[float] = mapped_column(nullable=False)
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "id": self.id,

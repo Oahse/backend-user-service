@@ -6,6 +6,7 @@ from api.v1.routes.user import router as user_router
 from api.v1.routes.address import router as address_router
 from api.v1.routes.notification import router as notification_router
 from api.v1.routes.category import router as category_router
+from api.v1.routes.currency import router as currency_router
 from api.v1.routes.inventory import router as inventory_router
 from api.v1.routes.payments import router as payments_router
 from api.v1.routes.products import router as products_router
@@ -104,6 +105,7 @@ app.include_router(user_router)
 app.include_router(address_router)
 app.include_router(notification_router)
 app.include_router(category_router)
+app.include_router(currency_router)
 app.include_router(inventory_router)
 app.include_router(payments_router)
 app.include_router(products_router)

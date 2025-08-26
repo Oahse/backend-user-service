@@ -4,7 +4,6 @@ from core.database import Base, CHAR_LENGTH
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID
 
-
 import uuid
 
 class PromoCode(Base):
