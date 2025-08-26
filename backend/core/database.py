@@ -19,7 +19,7 @@ engine_db = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True,pool_pre_ping
 AsyncSessionDB = sessionmaker(
     bind=engine_db, 
     class_=AsyncSession, 
-    expire_on_commit=True
+    expire_on_commit=False
 )
 
 

@@ -11,7 +11,7 @@ from schemas.user import (
     PasswordReset, PasswordResetConfirm, EmailVerification,
     RefreshTokenRequest,EmailChangeConfirm,EmailChangeRequest
 )
-
+import uuid
 router = APIRouter(prefix='/api/v1/users', tags=["Users"])
 security = HTTPBearer()
 
@@ -132,7 +132,7 @@ async def get_user_by_id(
     auth_service: AuthService = Depends(get_auth_service)
 ):
     print(user_id,'=====================================')
-    user = await auth_service._get_user_by_id(UUID(user_id))
+    user = await auth_service._get_user_by_id(uuid.UUID(user_id))
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return Response(data=user.to_dict(), message="User fetched (admin)", code=200)

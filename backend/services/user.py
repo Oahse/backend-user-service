@@ -1,7 +1,7 @@
 """
 Authentication service with user management and JWT token handling.
 """
-import secrets,string, re
+import secrets,string, re, uuid
 from datetime import datetime, timedelta
 from typing import Optional,List
 from sqlalchemy.dialects.postgresql import UUID
@@ -65,7 +65,7 @@ class AuthService:
                 active=True,
                 telegram=user_data.telegram,
                 age=user_data.age,
-                picture=None,  # temporarily None
+                picture=user_data.picture,  # temporarily None
                 whatsapp=user_data.whatsapp,
                 gender=user_data.gender,
             )
@@ -87,25 +87,9 @@ class AuthService:
             await self.db.commit()
             await self.db.refresh(db_user)  # Now db_user.id exists!
 
-            # Step 2: Upload image with user ID as filename
-            if user_data.picture:
-                google_drive = GoogleDrive(jsonkey=settings.google_service_account_info)
-                picture = google_drive.upload_base64_image_as_webp(
-                    base64_str=user_data.picture,
-                    filename=f"{db_user.id}.webp",
-                    folder_id=None,
-                    quality=30
-                )
-
-                # Step 3: Update user picture link
-                db_user.picture = picture['link']
-                self.db.add(db_user)
-                await self.db.commit()
-                await self.db.refresh(db_user)
-
-            # Step 4: Send verification OTP
+            # Step 2: Send verification OTP
             email_service = EmailService(background_tasks)
-            await email_service._send_verification_otp(db_user.email, background_tasks)
+            await email_service._send_verification_otp(db_user.full_name, db_user.email, background_tasks)
             return db_user
         except Exception as e:
             await self.db.rollback()
@@ -114,7 +98,7 @@ class AuthService:
     async def login_user(self, login_data: UserLogin) -> dict:
         """Authenticate user and return JWT tokens."""
         user = await self._get_user_by_email(login_data.email)
-        if not user or not verify_password(login_data.password_hash, user.password_hash):
+        if not user or not verify_password(login_data.password, user.password_hash):
             raise HTTPException(status_code=401, detail="Invalid email or password.")
 
         if not user.active:
@@ -178,14 +162,14 @@ class AuthService:
         if not user:
             raise HTTPException(status_code=404, detail="User not found.")
 
-        stored_otp = await redis_client.get(f"email_otp:{user.email}")
+        stored_otp = await redis_client.get(f"email_otp:{verification_data.email}")
         if not stored_otp or stored_otp != verification_data.otp:
             raise HTTPException(status_code=400, detail="Invalid or expired OTP.")
 
         user.verified = True
         user.updated_at = datetime.utcnow()
         await self.db.commit()
-        await redis_client.delete(f"email_otp:{user.email}")
+        await redis_client.delete(f"email_otp:{verification_data.email}")
         return True
 
     async def request_password_reset(self, reset_data: PasswordReset,background_tasks: BackgroundTasks) -> bool:
@@ -295,15 +279,15 @@ class AuthService:
             user_id = payload.get("sub")
             if not user_id:
                 raise HTTPException(status_code=401, detail="Invalid token.")
-
-            user = await self._get_user_by_id(UUID(user_id))
+            
+            user = await self._get_user_by_id(uuid.UUID(user_id))
             if not user or not user.active:
                 raise HTTPException(status_code=403, detail="User not found or inactive.")
 
             return user
 
-        except Exception:
-            raise HTTPException(status_code=401, detail="Could not validate credentials.")
+        except Exception as e :
+            raise HTTPException(status_code=401, detail=f"Could not validate credentials. {str(e)}")
     
     async def get_all_users(self, limit: int = 10, offset: int = 0) -> List[User]:
         query = select(User).options(selectinload(User.addresses)).limit(limit).offset(offset)
@@ -365,13 +349,13 @@ class AuthService:
     
     async def request_email_change(self, user_id: UUID, new_email: str,background_tasks: BackgroundTasks,):
         user = await self._get_user_by_id(user_id)
-        if user.email == new_email:
-            raise HTTPException(status_code=400, detail="New email is same as current email.")
-
+        # if user.email == new_email:
+        #     raise HTTPException(status_code=400, detail="New email is same as current email.")
+        
         # Check if new_email is already used by another user
-        existing_user = await self._get_user_by_email(new_email)
-        if existing_user:
-            raise HTTPException(status_code=400, detail="Email is already in use.")
+        # existing_user = await self._get_user_by_email(new_email)
+        # if existing_user:
+        #     raise HTTPException(status_code=400, detail="Email is already in use.")
 
         token = secrets.token_urlsafe(32)
         expires_at = datetime.utcnow() + timedelta(hours=1)
@@ -388,7 +372,7 @@ class AuthService:
 
         # Send confirmation email to new_email with token link or token code
         email_service = EmailService(background_tasks)
-        await email_service._send_email_change_confirmation(new_email, token)
+        await email_service._send_email_change_confirmation(user.full_name, user_id, new_email, token, background_tasks)
 
     async def confirm_email_change(self, user_id: UUID, token: str):
         # Fetch request by user_id and token
@@ -411,15 +395,18 @@ class AuthService:
     # --- Private Methods ---
     async def _get_user_by_email(self, email: str) -> Optional[User]:
         result = await self.db.execute(select(User).options(selectinload(User.addresses)).where(User.email == email))
-        return result.scalar_one_or_none()
+        user = result.scalar_one_or_none()
+        return user
 
     async def _get_user_by_phone(self, phone: str) -> Optional[User]:
         result = await self.db.execute(select(User).options(selectinload(User.addresses)).where(User.phone == phone))
-        return result.scalar_one_or_none()
+        user = result.scalar_one_or_none()
+        return user
 
     async def _get_user_by_id(self, user_id: UUID) -> Optional[User]:
         result = await self.db.execute(select(User).options(selectinload(User.addresses)).where(User.id == user_id))
-        return result.scalar_one_or_none()
+        user = result.scalar_one_or_none()
+        return user
     
     
     

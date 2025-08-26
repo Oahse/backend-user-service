@@ -1,8 +1,13 @@
-import os, json, asyncio
+import requests, os, json, asyncio,resend
 from email.message import EmailMessage
+from resend.exceptions import ResendError
 from aiosmtplib import SMTP
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from core.config import settings
+
+# This is your MailSlurp API key
+
+resend.api_key = settings.RESEND_API_KEY
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
@@ -14,27 +19,14 @@ env = Environment(
 
 # Utility to render Jinja2 template with context
 def render_email(template_name: str, context: dict) -> str:
+    
+
     try:
         template = env.get_template(template_name)
         return template.render(**context)
     except Exception as e:
         print(f"Template rendering error: {e}")
-        return ""
-
-# Send email via SMTP
-async def send_html_email(to_email: str, subject: str, html_body: str, text_body: str, from_email: str, from_password: str):
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = from_email
-    msg["To"] = to_email
-    msg.set_content(text_body)
-    msg.add_alternative(html_body, subtype='html')
-
-    smtp = SMTP(hostname=settings.SMTP_HOSTNAME, port=587, start_tls=True)
-    await smtp.connect()
-    await smtp.login(from_email, from_password)
-    await smtp.sendmail(from_email, to_email, msg.as_string())
-    await smtp.quit()
+        raise RuntimeError(f"Template rendering error: {e}")
 
 # Central dispatch function
 def send_email(
@@ -77,6 +69,7 @@ def send_email(
         "welcome": "Welcome to Our Store!",
         "onboarding": "Let’s Get You Started",
         "activation": "Activate Your Account",
+        "email_change":'Change Email',
         "password_reset": "Reset Your Password",
         "login_alert": "Login Alert",
         "profile_update": "Profile Update Confirmation",
@@ -137,6 +130,7 @@ def send_email(
         "welcome": "account/welcome.html",
         "onboarding": "account/onboarding.html",
         "activation": "account/activation.html",
+        "email_change": "account/email_change.html",
         "password_reset": "account/password_reset.html",
         "login_alert": "account/login_alert.html",
         "profile_update": "account/profile_update.html",
@@ -174,6 +168,46 @@ def send_email(
     try:
         html_body = render_email(template_name, context)
         text_body = context.get("text_body", "This is a plain-text fallback.")
-        asyncio.run(send_html_email(to_email, subject, html_body, text_body, from_email, from_password))
-    except Exception as e:
-        print(f"Failed to send '{mail_type}' email to {to_email}: {e}")
+        print('📤 Sending email...')
+
+        response = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {settings.RESEND_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "from": "Banwee <onboarding@resend.dev>",  # Must be verified
+                "to": [to_email],
+                "subject": subject,
+                "html": html_body,
+                "text": text_body
+            },
+            timeout=10
+        )
+
+        response.raise_for_status()
+        data = response.json()
+        print("✅ Email sent successfully:", data)
+        return data
+
+    except requests.exceptions.HTTPError as http_err:
+        try:
+            error_detail = response.json()
+        except Exception:
+            error_detail = response.text
+        print(f"❌ HTTP error: {http_err}")
+        print(f"🔍 Detail: {error_detail}")
+        raise
+
+    except requests.exceptions.Timeout:
+        print("❌ Request timed out.")
+        raise
+
+    except requests.exceptions.ConnectionError as conn_err:
+        print(f"❌ Connection error: {conn_err}")
+        raise
+
+    except Exception as err:
+        print(f"❌ Unexpected error: {err}")
+        raise

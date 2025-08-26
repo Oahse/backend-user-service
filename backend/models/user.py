@@ -82,7 +82,7 @@ class User(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, index=True)
     
     active: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
-    phone: Mapped[str] = mapped_column(String(CHAR_LENGTH), nullable=True, index=True)
+    phone: Mapped[str] = mapped_column(String(CHAR_LENGTH), nullable=True, index=True,unique=True)
     age: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     gender: Mapped[UserGender] = mapped_column(Enum(UserGender), nullable=False, index=True)
     
@@ -133,6 +133,6 @@ class EmailChangeRequestModel(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    new_email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    new_email: Mapped[str] = mapped_column(String, nullable=False, unique=False)
     token: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     expires_at: Mapped["datetime"] = mapped_column(DateTime, nullable=False)

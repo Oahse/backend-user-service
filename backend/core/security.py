@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Union
 from sqlalchemy.dialects.postgresql import UUID
 
-from jose import JWTError, jwt
+from jose import JWTError, jwt, ExpiredSignatureError
 from passlib.context import CryptContext
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -50,10 +50,13 @@ def verify_token(token: str, token_type: str = "access") -> dict:
                 detail="Invalid token type"
             )
         return payload
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials"
+            detail=f"Could not validate credentials-{JWTError:}"
         )
 
 

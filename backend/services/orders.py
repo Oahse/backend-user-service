@@ -57,11 +57,11 @@ class OrderService:
             
 
             # When a new order is placed
-            await broadcast_to_admins({
-                    "type": "new_order",
-                    "order_id": order.id,
-                    "total": len(order_in.items),
-                })
+            # await broadcast_to_admins({
+            #         "type": "new_order",
+            #         "order_id": order.id,
+            #         "total": len(order_in.items),
+            #     })
             await self.db.refresh(order)
             return order
         except Exception as e:

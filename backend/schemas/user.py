@@ -115,7 +115,7 @@ class UserUpdate(BaseModel):
 
 class UserLogin(BaseModel):
     email: EmailStr
-    password_hash: str
+    password: str
 
 class PasswordReset(BaseModel):
     email: EmailStr
