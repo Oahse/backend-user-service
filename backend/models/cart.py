@@ -6,7 +6,7 @@ from sqlalchemy import ForeignKey, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from core.database import Base  # Assuming this is your declarative base
+from core.database import Base, CHAR_LENGTH  # Assuming this is your declarative base
 from models.products import Product, ProductVariant
 
 
@@ -15,10 +15,10 @@ class Cart(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True)
-    ip_address: Mapped[Optional[str]] = mapped_column(String(45), nullable=True, index=True)
+    ip_address: Mapped[Optional[str]] = mapped_column(String(CHAR_LENGTH), nullable=True, index=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     items: Mapped[List["CartItem"]] = relationship("CartItem", back_populates="cart", cascade="all, delete")
 

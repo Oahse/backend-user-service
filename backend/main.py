@@ -12,6 +12,7 @@ from api.v1.routes.payments import router as payments_router
 from api.v1.routes.products import router as products_router
 from api.v1.routes.promocode import router as promocode_router
 from api.v1.routes.tag import router as tag_router
+from api.v1.routes.cart import router as cart_router
 from api.v1.routes.orders import router as orders_router
 # from api.v1.websockets.orders import router as ws_router
 # from api.v1.websockets.inventory import router as ws_inventory
@@ -112,6 +113,7 @@ app.include_router(products_router)
 app.include_router(promocode_router)
 app.include_router(tag_router)
 app.include_router(orders_router)
+app.include_router(cart_router)
 # app.include_router(ws_router)
 # app.include_router(ws_inventory)
 

@@ -144,7 +144,6 @@ async def get_user_by_id(
     admin_user=Depends(get_current_admin_user),
     auth_service: AuthService = Depends(get_auth_service)
 ):
-    print(user_id,'=====================================')
     user = await auth_service._get_user_by_id(uuid.UUID(user_id))
     if not user:
         raise HTTPException(status_code=404, detail="User not found")

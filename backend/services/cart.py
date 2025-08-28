@@ -3,10 +3,10 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
-
+from fastapi import HTTPException
 from models.cart import Cart, CartItem
 from schemas.cart import CartCreate, CartItemCreate
-
+from services.user import AuthService
 
 class CartService:
     def __init__(self, db: AsyncSession):
@@ -27,8 +27,11 @@ class CartService:
 
     async def get_by_user_or_ip(self, user_id: Optional[UUID], ip_address: Optional[str]) -> Optional[Cart]:
         stmt = select(Cart)
-
+        auth_service = AuthService(self.db)
         if user_id:
+            user = await auth_service._get_user_by_id(user_id)
+            if not user:
+                raise HTTPException(status_code=404, detail="User with user_id not found")
             stmt = stmt.where(Cart.user_id == user_id)
         elif ip_address:
             stmt = stmt.where(Cart.ip_address == ip_address)
@@ -40,6 +43,11 @@ class CartService:
         return result.scalar_one_or_none()
 
     async def create(self, cart_in: CartCreate) -> Cart:
+        auth_service = AuthService(self.db)
+        if cart_in.user_id:
+            user = await auth_service._get_user_by_id(cart_in.user_id)
+            if not user:
+                raise HTTPException(status_code=404, detail="User with user_id not found")
         cart = Cart(user_id=cart_in.user_id, ip_address=cart_in.ip_address)
         self.db.add(cart)
         try:
