@@ -79,6 +79,19 @@ async def verify_email(
     await auth_service.verify_email(verification_data)
     return Response(data=True, message="Email verified successfully", code=200)
 
+@router.post("/resend-verification-otp")
+async def resend_verification_otp(
+    email_verification: EmailVerification,
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    user = await auth_service._get_user_by_email(email_verification.email)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.verified:
+        raise HTTPException(status_code=400, detail="Email already verified")
+    await auth_service._send_verification_otp(user.email)
+    return Response(data=True, message="Verification OTP resent", code=200)
+
 
 @router.post("/request-password-reset")
 async def request_password_reset(
@@ -182,19 +195,6 @@ async def activate_user(
     user.active = True
     await auth_service.db.commit()
     return Response(data=True, message="User activated", code=200)
-
-@router.post("/resend-verification-otp")
-async def resend_verification_otp(
-    email_verification: EmailVerification,
-    auth_service: AuthService = Depends(get_auth_service)
-):
-    user = await auth_service._get_user_by_email(email_verification.email)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    if user.verified:
-        raise HTTPException(status_code=400, detail="Email already verified")
-    await auth_service._send_verification_otp(user.email)
-    return Response(data=True, message="Verification OTP resent", code=200)
 
 @router.get("/roles")
 async def get_roles():

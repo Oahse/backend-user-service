@@ -7,9 +7,10 @@ from .products import Product,ProductVariant,ProductVariantAttribute,ProductVari
 from .promocode import PromoCode
 from .tag import Tag
 from .currency import Currency
+from .cart import Cart, CartItem
 # import other models too...
 
 from core.database import Base,engine_db  # or wherever your Base is defined
 
 
-__all__ = ['User', 'Address','EmailChangeRequestModel',"Category", "Currency", 'Order','OrderItem','Payment','Product','ProductVariant','ProductVariantAttribute','ProductVariantImage','PromoCode','Tag']
+__all__ = ['User', 'Address','EmailChangeRequestModel',"Category","Cart","CartItem", "Currency", 'Order','OrderItem','Payment','Product','ProductVariant','ProductVariantAttribute','ProductVariantImage','PromoCode','Tag']
