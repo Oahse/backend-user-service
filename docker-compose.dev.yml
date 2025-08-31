@@ -56,34 +56,34 @@ services:
   #         cpus: '0.15'
   #         memory: 150M
   
-  postgres-db:
-    image: postgres:15-alpine
-    container_name: postgres-db
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: banwee_db
-    volumes:
-      - postgres-db-data:/var/lib/postgresql/data
-    restart: unless-stopped
-    ports:
-      - "5432:5432"  # optional in dev
-    networks:
-      - webnet
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "banwee_db"]
-      interval: 10s
-      retries: 5
-      start_period: 30s
-      timeout: 10s
-    deploy:
-      resources:
-        limits:
-          cpus: '0.3'
-          memory: 300M
-        reservations:
-          cpus: '0.15'
-          memory: 150M
+  # postgres-db:
+  #   image: postgres:15-alpine
+  #   container_name: postgres-db
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: postgres
+  #     POSTGRES_DB: banwee_db
+  #   volumes:
+  #     - postgres-db-data:/var/lib/postgresql/data
+  #   restart: unless-stopped
+  #   ports:
+  #     - "5432:5432"  # optional in dev
+  #   networks:
+  #     - webnet
+  #   healthcheck:
+  #     test: ["CMD", "pg_isready", "-U", "postgres", "-d", "banwee_db"]
+  #     interval: 10s
+  #     retries: 5
+  #     start_period: 30s
+  #     timeout: 10s
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '0.3'
+  #         memory: 300M
+  #       reservations:
+  #         cpus: '0.15'
+  #         memory: 150M
 
   backend:
     build:
@@ -94,8 +94,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      postgres-db:
-        condition: service_healthy
+      # postgres-db:
+      #   condition: service_healthy
     ports:
       - "8000:8000"
     networks:
@@ -108,7 +108,7 @@ services:
     working_dir: /usr/src/app
     restart: unless-stopped
     environment:
-      - POSTGRES_SERVER=postgres-db
+      - POSTGRES_SERVER=banwee-db.c2po20oyum9p.us-east-1.rds.amazonaws.com
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/2
@@ -157,5 +157,5 @@ networks:
     driver: bridge
 
 volumes:
-  postgres-db-data:
+  # postgres-db-data:
   redis-data:

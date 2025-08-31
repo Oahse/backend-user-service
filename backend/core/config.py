@@ -40,11 +40,11 @@ class Settings:
     REDIS_CACHE_TTL: int = int(os.getenv('REDIS_CACHE_TTL', '3600'))  # default 3600 seconds (1 hour)
 
     # SMS
-    SMS_API_KEY: Optional[str] = os.getenv('SMS_API_KEY')
-    SMS_API_URL: Optional[str] = os.getenv('SMS_API_URL')
+    # SMS_API_KEY: Optional[str] = os.getenv('SMS_API_KEY')
+    # SMS_API_URL: Optional[str] = os.getenv('SMS_API_URL')
 
     # Push Notifications
-    FIREBASE_CREDENTIALS_JSON: Optional[str] = os.getenv('FIREBASE_CREDENTIALS_JSON','')
+    # FIREBASE_CREDENTIALS_JSON: Optional[str] = os.getenv('FIREBASE_CREDENTIALS_JSON','')
 
     # Celery
     CELERY_BROKER_URL: str = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/1')
@@ -52,11 +52,12 @@ class Settings:
     
     # PostgreSQL
     POSTGRES_USER: str = os.getenv('POSTGRES_USER', 'postgres')
-    POSTGRES_PASSWORD: str = os.getenv('POSTGRES_PASSWORD', 'postgres')
-    POSTGRES_SERVER: str = os.getenv('POSTGRES_SERVER', 'localhost')
+    POSTGRES_PASSWORD: str = os.getenv('POSTGRES_PASSWORD', '0ZTftS7B0Bsf3tlzddQs')
+    POSTGRES_SERVER: str = os.getenv('POSTGRES_SERVER', 'banwee-db.c2po20oyum9p.us-east-1.rds.amazonaws.com')
     POSTGRES_PORT: int = int(os.getenv('POSTGRES_PORT', 5432))
-    POSTGRES_DB: str = os.getenv('POSTGRES_DB', 'users_db')
-
+    POSTGRES_DB: str = os.getenv('POSTGRES_DB', 'banwee_db')
+    POSTGRES_DB_URL: str = os.getenv('POSTGRES_DB_URL', f"postgresql+asyncpg://postgres:0ZTftS7B0Bsf3tlzddQs@banwee-db.c2po20oyum9p.us-east-1.rds.amazonaws.com:5432/banwee_db")
+    
     # SQLite (fallback if needed)
     SQLITE_DB_PATH: str = os.getenv('SQLITE_DB_PATH', 'db1.db')
 
@@ -66,6 +67,7 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES', 30))
     REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv('REFRESH_TOKEN_EXPIRE_DAYS', 7))
     RESEND_API_KEY: str = os.getenv('RESEND_API_KEY', "re_J9sfHbqG_Go1YUSTfYS14y6Te1L2jNEUj") 
+
     # CORS
     RAW_CORS_ORIGINS: str = os.getenv('BACKEND_CORS_ORIGINS', '')
     BACKEND_CORS_ORIGINS: List[str] = parse_cors(RAW_CORS_ORIGINS)
@@ -78,12 +80,12 @@ class Settings:
     WHATSAPP_ACCESS_TOKEN: str = os.getenv('WHATSAPP_ACCESS_TOKEN', '')
     PHONE_NUMBER_ID: str = os.getenv('PHONE_NUMBER_ID', '')
 
-    GOOGLE_SERVICE_ACCOUNT_TYPE: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_TYPE', '')
-    GOOGLE_SERVICE_ACCOUNT_PROJECT: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_PROJECT', '')
-    GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY_ID: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY_ID', '')
-    GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY', '')
-    GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL', '')
-    GOOGLE_SERVICE_ACCOUNT_CLIENT_ID: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_CLIENT_ID', '')
+    # GOOGLE_SERVICE_ACCOUNT_TYPE: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_TYPE', '')
+    # GOOGLE_SERVICE_ACCOUNT_PROJECT: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_PROJECT', '')
+    # GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY_ID: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY_ID', '')
+    # GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY', '')
+    # GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL', '')
+    # GOOGLE_SERVICE_ACCOUNT_CLIENT_ID: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_CLIENT_ID', '')
 
     @property
     def google_service_account_info(self) -> dict:
@@ -123,6 +125,8 @@ class Settings:
     def SQLALCHEMY_DATABASE_URI(self) -> str:
         if self.ENVIRONMENT in ["local"]:
             # return f"sqlite+aiosqlite:///{self.SQLITE_DB_PATH}"  # SQLite URI
+            # if self.POSTGRES_DB_URL:
+            #     return self.POSTGRES_DB_URL
             return (
                 f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
                 f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
@@ -131,7 +135,9 @@ class Settings:
             # for docker
             # return 'postgresql+asyncpg://postgres:postgres@users-db:5432/users_db'
 
-            # for render
+            # if self.POSTGRES_DB_URL:
+            #     return self.POSTGRES_DB_URL
+            # for supabase
             return 'postgresql+asyncpg://postgres:fAdvot-vyggeg-1rysku@db.htvauholjqlrfihihszd.supabase.co:5432/postgres'
 
             # return (

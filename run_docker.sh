@@ -417,7 +417,8 @@ create_network_and_volumes() {
     fi
     
     # Create volumes
-    local volumes=("users-db-data" "redis-data")
+    # "postgres-db-data" volume is commented out in compose file
+    local volumes=("redis-data") 
     
     for volume in "${volumes[@]}"; do
         if docker volume inspect "$volume" >/dev/null 2>&1; then
