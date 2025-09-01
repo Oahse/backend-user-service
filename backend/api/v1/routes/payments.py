@@ -78,19 +78,21 @@ async def get_all_payments(
         method: Optional[PaymentMethod] = None,
         status: Optional[PaymentStatus] = None,
         amount: Optional[float] = None,
-        currency: Optional[str] = None,
+        currency: Optional[UUID] = None,
         transaction_id: Optional[str] = None,
         gateway_response: Optional[str] = None,
         created_at: Optional[datetime] = None,
         updated_at: Optional[datetime] = None,
         refunded_amount: Optional[float] = None,
-        parent_payment_id: Optional[str] = None,
+        parent_payment_id: Optional[UUID] = None,
         limit: int = 10,
         offset: int = 0, 
         db: AsyncSession = Depends(get_db)):
     try:
         service = PaymentService(db)
-        payments = await service.get_all(order_id)
+        payments = await service.get_all(order_id, user_id, method, status, amount, currency, transaction_id,
+                                        gateway_response, created_at, updated_at, refunded_amount, parent_payment_id,
+                                        limit, offset)
         return Response(data=[payment.to_dict() for payment in payments])
     except Exception as e:
         return Response(success=False, message=str(e), code=500)

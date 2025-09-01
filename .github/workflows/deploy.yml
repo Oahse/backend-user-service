@@ -14,11 +14,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Step 2: Set up Node.js (for frontend build)
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
+      # Step 2: Set up backend/requirements.txt (for fastapi build)
+      - name: Set up Requirements
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r backend/requirements.txt
+      
+        
 
 
       # Step 3: Set up SSH and copy the full project to EC2

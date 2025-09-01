@@ -87,36 +87,36 @@ class Settings:
     # GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL', '')
     # GOOGLE_SERVICE_ACCOUNT_CLIENT_ID: str = os.getenv('GOOGLE_SERVICE_ACCOUNT_CLIENT_ID', '')
 
-    @property
-    def google_service_account_info(self) -> dict:
-        """
-        Returns the parsed JSON content of the Google service account key,
-        or raises an error if it's missing or invalid.
-        """
+    # @property
+    # def google_service_account_info(self) -> dict:
+    #     """
+    #     Returns the parsed JSON content of the Google service account key,
+    #     or raises an error if it's missing or invalid.
+    #     """
 
-        GOOGLE_SERVICE_ACCOUNT_JSON={
-            "type": "service_account",
-            "project_id": self.GOOGLE_SERVICE_ACCOUNT_PROJECT,
-            "private_key_id": self.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY_ID,
-            "private_key": self.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY,
-            "client_email": self.GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL,
-            "client_id": self.GOOGLE_SERVICE_ACCOUNT_CLIENT_ID,
-        }
+    #     GOOGLE_SERVICE_ACCOUNT_JSON={
+    #         "type": "service_account",
+    #         "project_id": self.GOOGLE_SERVICE_ACCOUNT_PROJECT,
+    #         "private_key_id": self.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY_ID,
+    #         "private_key": self.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY,
+    #         "client_email": self.GOOGLE_SERVICE_ACCOUNT_CLIENT_EMAIL,
+    #         "client_id": self.GOOGLE_SERVICE_ACCOUNT_CLIENT_ID,
+    #     }
 
-        return GOOGLE_SERVICE_ACCOUNT_JSON
+    #     return GOOGLE_SERVICE_ACCOUNT_JSON
     
-    @property
-    def firebase_service_account_info(self) -> dict:
-        """
-        Returns the parsed JSON content of the Google service account key,
-        or raises an error if it's missing or invalid.
-        """
-        if not self.FIREBASE_CREDENTIALS_JSON:
-            raise ValueError("FIREBASE_CREDENTIALS_JSON environment variable is not set")
-        try:
-            return json.loads(self.FIREBASE_CREDENTIALS_JSON)
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON in FIREBASE_CREDENTIALS_JSON: {e}")
+    # @property
+    # def firebase_service_account_info(self) -> dict:
+    #     """
+    #     Returns the parsed JSON content of the Google service account key,
+    #     or raises an error if it's missing or invalid.
+    #     """
+    #     if not self.FIREBASE_CREDENTIALS_JSON:
+    #         raise ValueError("FIREBASE_CREDENTIALS_JSON environment variable is not set")
+    #     try:
+    #         return json.loads(self.FIREBASE_CREDENTIALS_JSON)
+    #     except json.JSONDecodeError as e:
+    #         raise ValueError(f"Invalid JSON in FIREBASE_CREDENTIALS_JSON: {e}")
     @property
     def server_host(self) -> str:
         return f"http://{self.DOMAIN}" if self.ENVIRONMENT == "local" else f"https://{self.DOMAIN}"

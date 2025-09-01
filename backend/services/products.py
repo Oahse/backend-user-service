@@ -12,7 +12,6 @@ from services.category import CategoryService
 from core.config import settings
 # from core.utils.kafka import KafkaProducer, send_kafka_message, is_kafka_available
 from core.utils.barcode import Barcode
-from core.utils.file import ImageFile, GoogleDrive  # Assuming your classes are in utils.py
 
 # kafka_producer = KafkaProducer(broker=settings.KAFKA_BOOTSTRAP_SERVERS,
 #                                topic=str(settings.KAFKA_TOPIC))
@@ -67,15 +66,6 @@ def generate_variant_name(attributes):
     # Sort attributes by "name" for consistency
     return " - ".join(f"{attr.name}: {attr.value}" for attr in attributes)
 
-async def upload_image_to_drive(base64_str: str, filename: str, quality: int = 30) -> str:
-    google_drive = GoogleDrive(jsonkey=settings.google_service_account_info)
-    result = google_drive.upload_base64_image_as_webp(
-        base64_str=base64_str,
-        filename=filename,
-        folder_id=None,
-        quality=quality
-    )
-    return result['link']
 
 
 class ProductService:
@@ -333,11 +323,10 @@ class ProductService:
 
                     # Remove existing images, re-add new ones (simplified logic)
                     await self.db.execute(delete(ProductVariantImage).where(ProductVariantImage.variant_id == variant.id))
-                    for i, image in enumerate(variant_in.images or []):
-                        url = await upload_image_to_drive(image, f"{variant.id}_{i}.webp", quality=30)
+                    for image in variant_in.images:
                         v_image = ProductVariantImage(
                             variant_id=variant.id,
-                            url=url,
+                            url=image.url,
                             alt_text=variant.sku
                         )
                         self.db.add(v_image)
@@ -372,7 +361,6 @@ class ProductService:
                         self.db.add(v_attribute)
                         
                     for image in variant_in.images:
-                        # url = await upload_image_to_drive(image, f"{vid}_{i}.webp", quality=30)
                         v_image = ProductVariantImage(
                             variant_id=vid,
                             url=image.url,

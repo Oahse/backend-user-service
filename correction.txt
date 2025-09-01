@@ -1,0 +1,4 @@
+do not change my struture, just make sure i can deploy to my ec2 instance correctly. by dev dockercompose with rundocker works fine.
+
+
+# do not change my struture

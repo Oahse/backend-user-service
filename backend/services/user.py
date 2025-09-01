@@ -20,7 +20,6 @@ from schemas.user import (
     PasswordResetConfirm,
     EmailVerification
 )
-from core.utils.file import ImageFile, GoogleDrive  # Assuming your classes are in utils.py
 
 from core.security import (
     verify_password,
@@ -241,29 +240,7 @@ class AuthService:
                         kind=addr.kind
                     )
                     self.db.add(new_addr)
-        # Handle profile picture update
-        if "picture" in update_fields and update_fields["picture"]:
-            google_drive = GoogleDrive(jsonkey=settings.google_service_account_info)
-
-            # ✅ Step 1: Delete previous image (if exists and is a Drive link)
-            if user.picture and "drive.google.com" in user.picture:
-                match = re.search(r'/d/([a-zA-Z0-9_-]+)', user.picture)
-                if match:
-                    old_file_id = match.group(1)
-                    try:
-                        google_drive.delete_file(old_file_id)
-                    except Exception as e:
-                        print(f"Failed to delete old image: {e}")
-
-            # ✅ Step 2: Upload new image
-            upload_result = google_drive.upload_base64_image_as_webp(
-                base64_str=update_fields["picture"],
-                filename=f"{user.id}.webp",
-                folder_id=None,
-                quality=30
-            )
-            update_fields["picture"] = upload_result['link']
-
+        
         for field, value in update_data.model_dump(exclude_unset=True).items():
             setattr(user, field, value)
 
