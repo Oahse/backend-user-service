@@ -1,6 +1,5 @@
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
-from fastapi.exceptions import RequestValidationError
 from typing import Union, Any
 
 def get_message_from_code(code: int) -> str:

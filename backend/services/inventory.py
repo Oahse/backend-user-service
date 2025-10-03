@@ -6,9 +6,8 @@ from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from uuid import UUID
 
-import uuid
 
-from models.products import Product, Inventory, InventoryProduct
+from models.products import Inventory, InventoryProduct
 from schemas.inventory import InventoryCreate, InventoryProductCreate, InventoryProductUpdate
 # from api.v1.websockets.inventory import broadcast_inventory_update  # WebSocket broadcast
 

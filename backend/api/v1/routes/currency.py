@@ -1,11 +1,10 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
 from uuid import UUID
 
 from core.database import get_db
 from services.currency import CurrencyService
-from schemas.currency import CurrencyCreate, CurrencyRead, CurrencyUpdate
+from schemas.currency import CurrencyCreate, CurrencyUpdate
 from core.utils.response import Response
 
 router = APIRouter(prefix="/api/v1/currencies", tags=["Currencies"])

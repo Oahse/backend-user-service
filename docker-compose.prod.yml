@@ -1,56 +1,24 @@
 services:
-  redis:
-    image: redis:alpine
-    container_name: redis
+  users-db:
+    image: postgres:15-alpine
+    container_name: users-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: users_db
+    volumes:
+      - postgres-db-data:/var/lib/postgresql/data
+    restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "5432:5432"
     networks:
       - webnet
-    volumes:
-      - redis-data:/data
-    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "users_db"]
       interval: 10s
       retries: 5
-      timeout: 10s
       start_period: 30s
-    deploy:
-      resources:
-        limits:
-          cpus: '0.2'        # 20% of one CPU core
-          memory: 200M       # max 200 MB RAM
-        reservations:
-          cpus: '0.1'        # reserve 10%
-          memory: 100M
-
-
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.dev
-    # command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-    container_name: backend
-    depends_on:
-      redis:
-        condition: service_healthy
-
-    ports:
-      - "8000:8000"
-    networks:
-      - webnet
-    volumes:
-      - ./backend:/usr/src/app  # live code changes
-      - /usr/src/app/__pycache__  # exclude pycache from volume mount
-    env_file:
-      - .env.local
-    working_dir: /usr/src/app
-    restart: unless-stopped
-    environment:
-      - POSTGRES_SERVER=banwee-db.c2po20oyum9p.us-east-1.rds.amazonaws.com
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      timeout: 10s
     deploy:
       resources:
         limits:
@@ -60,39 +28,36 @@ services:
           cpus: '0.15'
           memory: 150M
 
-  celery_worker:
+  backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.celery
-    container_name: celery_worker
+      dockerfile: Dockerfile.prod
+    container_name: backend
     depends_on:
-      redis:
+      users-db:
         condition: service_healthy
-    volumes:
-      - ./backend:/usr/src/app  # live code changes
-      - /usr/src/app/__pycache__  # exclude pycache from volume mount
-    env_file:
-      - .env.local
-    working_dir: /usr/src/app
-    restart: unless-stopped
+    ports:
+      - "8000:8000"
     networks:
       - webnet
+    env_file:
+      - .env.production
+    working_dir: /usr/src/app
+    restart: unless-stopped
     environment:
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - POSTGRES_SERVER=users-db
     deploy:
       resources:
         limits:
-          cpus: '0.2'
-          memory: 200M
+          cpus: '0.3'
+          memory: 300M
         reservations:
-          cpus: '0.1'
-          memory: 100M
+          cpus: '0.15'
+          memory: 150M
 
 networks:
   webnet:
     driver: bridge
 
 volumes:
-  redis-data:
+  postgres-db-data:

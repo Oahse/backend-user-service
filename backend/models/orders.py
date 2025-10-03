@@ -1,10 +1,10 @@
-from sqlalchemy.orm import mapped_column, Mapped, relationship, validates
-from sqlalchemy import Enum, Integer, String, DateTime, ForeignKey, Boolean, Text, DECIMAL, Table, Column
+from sqlalchemy.orm import mapped_column, Mapped, relationship
+from sqlalchemy import Enum, Integer, String, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 
 from datetime import datetime
 from enum import Enum as PyEnum
-from typing import List, Optional, Dict, Any
+from typing import List, Dict, Any
 
 from core.database import Base, CHAR_LENGTH
 from models.currency import Currency
@@ -27,7 +27,7 @@ class Order(Base):
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     status: Mapped[OrderStatus] = mapped_column(Enum(OrderStatus), default=OrderStatus.Pending, nullable=False, index=True)
 
-    total_amount: Mapped[float] = mapped_column(nullable=False)
+    total_amount: Mapped[DECIMAL] = mapped_column(DECIMAL(18, 8), nullable=False)
     currency: Mapped[UUID] = mapped_column(ForeignKey("currencies.id"), nullable=False, index=True)
     currency_rel: Mapped["Currency"] = relationship("Currency", lazy="joined")
 
@@ -55,12 +55,12 @@ class OrderItem(Base):
     __tablename__ = "order_items"
 
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    order_id: Mapped[str] = mapped_column(ForeignKey("orders.id"), nullable=False)
+    order_id: Mapped[UUID] = mapped_column(ForeignKey("orders.id"), nullable=False)
     order: Mapped["Order"] = relationship("Order", back_populates="items")
-    product_id: Mapped[str] = mapped_column(String(CHAR_LENGTH), nullable=False, index=True)
+    product_id: Mapped[UUID] = mapped_column(ForeignKey("products.id"), nullable=False, index=True)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
-    price_per_unit: Mapped[float] = mapped_column(nullable=False, index=True)
-    total_price: Mapped[float] = mapped_column(nullable=False)
+    price_per_unit: Mapped[DECIMAL] = mapped_column(DECIMAL(18, 8), nullable=False, index=True)
+    total_price: Mapped[DECIMAL] = mapped_column(DECIMAL(18, 8), nullable=False)
 
     def to_dict(self) -> Dict[str, Any]:
         return {

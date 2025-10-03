@@ -1,14 +1,12 @@
-from typing import Optional, List, Dict, Any
+from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-from sqlalchemy import update, delete,and_
+from sqlalchemy import delete,and_
 from models.orders import Order, OrderItem, OrderStatus  # adjust import
-from schemas.orders import OrderSchema, OrderItemSchema,UpdateOrderSchema,OrderFilterSchema, UUID
-from core.config import settings
+from schemas.orders import OrderSchema, OrderItemSchema,UpdateOrderSchema,UUID
 # from core.utils.kafka import KafkaProducer, send_kafka_message, is_kafka_available
 from datetime import datetime
-from api.v1.websockets.analytics import broadcast_to_admins
 
 # kafka_producer = KafkaProducer(broker=settings.KAFKA_BOOTSTRAP_SERVERS,
 #                                 topic=str(settings.KAFKA_TOPIC))
@@ -234,7 +232,7 @@ class OrderItemService:
             
 
             # Recalculate total_price if quantity or price_per_unit changed and total_price not explicitly set
-            if ("quantity" in kwargs or "price_per_unit" in kwargs) and "total_price" not in kwargs:
+            if ("quantity" in data or "price_per_unit" in data) and "total_price" not in data:
                 item.total_price = item.quantity * item.price_per_unit
 
             await self.db.flush()

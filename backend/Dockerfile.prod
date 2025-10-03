@@ -28,20 +28,16 @@ RUN curl -sSL https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wai
 RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 
 # Python dependencies
-COPY requirements*.txt ./
+COPY requirements.txt ./
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Copy app source
 COPY . .
-
-RUN curl -s -o wait-for-it.sh https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh && \
-    chmod +x wait-for-it.sh
 
 RUN chmod +x ./entrypoint.prod.sh
 
 # Expose FastAPI port
 EXPOSE 8000
 
-
-# Start the app with the entrypoint
+# Entrypoint script will handle waiting + migration + app start
 ENTRYPOINT ["/usr/src/app/entrypoint.prod.sh"]

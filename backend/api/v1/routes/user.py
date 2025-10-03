@@ -7,7 +7,7 @@ from models.user import UserRole
 from services.user import AuthService, UUID,Optional
 
 from schemas.user import (
-    UserCreate, UserLogin, UserRead, UserUpdate,
+    UserCreate, UserLogin, UserUpdate,
     PasswordReset, PasswordResetConfirm, EmailVerification,
     RefreshTokenRequest,EmailChangeConfirm,EmailChangeRequest
 )

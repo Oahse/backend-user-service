@@ -2,7 +2,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import List, Optional
-from models.tag import (Tag, uuid, UUID)
+from models.tag import (Tag, UUID)
 from schemas.tag import (TagCreate)
 
 class TagService:

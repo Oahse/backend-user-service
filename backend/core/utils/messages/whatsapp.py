@@ -1,7 +1,7 @@
 import httpx
 from typing import Optional
 from fastapi import BackgroundTasks
-from core.config import settings,logger
+from core.config import settings
 
 class WhatsappBotHandler:
     def __init__(self,whatsapp_token,phone_number_id, background_tasks: BackgroundTasks):

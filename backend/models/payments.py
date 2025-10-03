@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, ForeignKey, DateTime, Enum, Integer, Boolean, DECIMAL, Text
+from sqlalchemy import String, ForeignKey, DateTime, Enum, DECIMAL, Text
 from enum import Enum as PyEnum
 from datetime import datetime
 from typing import Optional
@@ -27,6 +27,7 @@ class PaymentMethod(PyEnum):
     GiftCard = "GiftCard"
     BuyNowPayLater = "BuyNowPayLater"  # Klarna, Affirm etc.
     StoreCredit = "StoreCredit"      # Internal credit or loyalty points
+    Stripe = "Stripe"
     Other = "Other"
 
 class PaymentStatus(PyEnum):
@@ -65,6 +66,10 @@ class Payment(Base):
 
     # For partial refunds or multiple payment attempts
     parent_payment_id: Mapped[Optional[UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("payments.id"), nullable=True)
+
+    stripe_customer_id: Mapped[Optional[str]] = mapped_column(String(CHAR_LENGTH), nullable=True, index=True)
+    stripe_payment_intent_id: Mapped[Optional[str]] = mapped_column(String(CHAR_LENGTH), nullable=True, index=True)
+    stripe_checkout_session_id: Mapped[Optional[str]] = mapped_column(String(CHAR_LENGTH), nullable=True, index=True)
     
     def to_dict(self) -> dict:
         return {
@@ -81,6 +86,9 @@ class Payment(Base):
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "refunded_amount": float(self.refunded_amount) if self.refunded_amount is not None else 0,
             "parent_payment_id": self.parent_payment_id,
+            "stripe_customer_id": self.stripe_customer_id,
+            "stripe_payment_intent_id": self.stripe_payment_intent_id,
+            "stripe_checkout_session_id": self.stripe_checkout_session_id,
         }
     def __repr__(self):
         return f"<Payment(id={self.id}, order_id={self.order_id}, method={self.method}, status={self.status}, amount={self.currency}{self.amount})>"

@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
+from typing import Optional
 
 from core.database import get_db
 from core.utils.response import Response
-from schemas.user import AddressCreate, AddressUpdate, AddressRead,UUID
+from schemas.user import AddressCreate, AddressUpdate, UUID
 from services.address import AddressService
 
 router = APIRouter(prefix='/api/v1/addresses', tags=["Addresses"])

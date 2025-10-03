@@ -1,8 +1,5 @@
 # Firebase Cloud Messaging (FCM)
 import asyncio
-import firebase_admin
-from firebase_admin import credentials, messaging
-from core.config import settings,logger
 # firbasejson ={
 #   "type": "service_account",
 #   "project_id": "your-project-id",

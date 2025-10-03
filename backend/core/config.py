@@ -1,7 +1,6 @@
 import os
-from typing import Any, Optional, List, Literal
+from typing import List, Literal
 from dotenv import load_dotenv
-import json
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -56,7 +55,7 @@ class Settings:
     POSTGRES_SERVER: str = os.getenv('POSTGRES_SERVER', 'banwee-db.c2po20oyum9p.us-east-1.rds.amazonaws.com')
     POSTGRES_PORT: int = int(os.getenv('POSTGRES_PORT', 5432))
     POSTGRES_DB: str = os.getenv('POSTGRES_DB', 'banwee_db')
-    POSTGRES_DB_URL: str = os.getenv('POSTGRES_DB_URL', f"postgresql+asyncpg://postgres:0ZTftS7B0Bsf3tlzddQs@banwee-db.c2po20oyum9p.us-east-1.rds.amazonaws.com:5432/banwee_db")
+    POSTGRES_DB_URL: str = os.getenv('POSTGRES_DB_URL', "postgresql+asyncpg://postgres:0ZTftS7B0Bsf3tlzddQs@banwee-db.c2po20oyum9p.us-east-1.rds.amazonaws.com:5432/banwee_db")
     
     # SQLite (fallback if needed)
     SQLITE_DB_PATH: str = os.getenv('SQLITE_DB_PATH', 'db1.db')

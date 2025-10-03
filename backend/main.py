@@ -23,7 +23,6 @@ from core.utils.response import Response, RequestValidationError
 # from core.utils.messages import telegram
 from core.utils.redis import redis_client
 # from core.utils.kafka import KafkaConsumer,KafkaProducer ,is_kafka_available
-import asyncio
 
 
 # Initialize Kafka consumer with broker(s), topic and group ID from settings

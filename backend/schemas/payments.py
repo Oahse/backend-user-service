@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
+from pydantic import BaseModel
+from typing import Optional
 from datetime import datetime
 from enum import Enum
 from uuid import UUID
@@ -22,6 +22,7 @@ class PaymentMethod(str, Enum):
     GiftCard = "GiftCard"
     BuyNowPayLater = "BuyNowPayLater"  # Klarna, Affirm etc.
     StoreCredit = "StoreCredit"      # Internal credit or loyalty points
+    Stripe = "Stripe"
     Other = "Other"
 
 
@@ -58,6 +59,27 @@ class PaymentSchema(BaseModel):
     refunded_amount: float = 0.0
     parent_payment_id: Optional[UUID] = None
     parent_payment: Optional[ParentPaymentSchema] = None
+    stripe_customer_id: Optional[str] = None
+    stripe_payment_intent_id: Optional[str] = None
+    stripe_checkout_session_id: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+class PaymentCreate(BaseModel):
+    order_id: UUID
+    user_id: Optional[UUID] = None
+    method: PaymentMethod
+    amount: float
+    currency: str
+    stripe_customer_id: Optional[str] = None
+    stripe_payment_intent_id: Optional[str] = None
+    stripe_checkout_session_id: Optional[str] = None
+
+class PaymentUpdate(BaseModel):
+    status: Optional[PaymentStatus] = None
+    transaction_id: Optional[str] = None
+    gateway_response: Optional[str] = None
+    refunded_amount: Optional[float] = None
+    stripe_payment_intent_id: Optional[str] = None
+    stripe_checkout_session_id: Optional[str] = None

@@ -10,7 +10,4 @@ from .currency import Currency
 from .cart import Cart, CartItem
 # import other models too...
 
-from core.database import Base,engine_db  # or wherever your Base is defined
-
-
 __all__ = ['User', 'Address','EmailChangeRequestModel',"Category","Cart","CartItem", "Currency", 'Order','OrderItem','Payment','Product','ProductVariant','ProductVariantAttribute','ProductVariantImage','PromoCode','Tag']

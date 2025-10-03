@@ -1,5 +1,5 @@
 from sqlalchemy.orm import mapped_column, Mapped, relationship, validates
-from sqlalchemy import Enum, Integer, String, DateTime, ForeignKey, Boolean, Text, BigInteger
+from sqlalchemy import Enum, Integer, String, DateTime, ForeignKey, Boolean, Text
 from core.database import Base, CHAR_LENGTH
 from core.utils.encryption import PasswordManager
 from datetime import datetime
@@ -17,7 +17,7 @@ class Address(Base):
     __tablename__ = "addresses"
 
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
     user: Mapped["User"] = relationship("User", back_populates="addresses", uselist=False)
     
     street: Mapped[str] = mapped_column(String(CHAR_LENGTH), nullable=True)
@@ -134,4 +134,4 @@ class EmailChangeRequestModel(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     new_email: Mapped[str] = mapped_column(String, nullable=False, unique=False)
     token: Mapped[str] = mapped_column(String, nullable=False, unique=True)
-    expires_at: Mapped["datetime"] = mapped_column(DateTime, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)

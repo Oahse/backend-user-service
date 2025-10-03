@@ -1,145 +1,111 @@
-from typing import Optional, List, Dict, Any
+from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import and_
-from uuid import UUID
-from datetime import datetime
-
-from models.payments import Payment, PaymentStatus, PaymentMethod  # adjust import as needed
-
+from models.payments import Payment, PaymentStatus, PaymentMethod
+from schemas.payments import PaymentCreate, PaymentUpdate, UUID
+from services.stripe import StripeService
 
 class PaymentService:
     def __init__(self, db: AsyncSession):
         self.db = db
+        self.stripe_service = StripeService()
 
-    async def create_payment(
-        self,
-        order_id: UUID,
-        method: PaymentMethod,
-        amount: float,
-        currency: str,
-        user_id: Optional[str] = None,
-        transaction_id: Optional[str] = None,
-        gateway_response: Optional[str] = None,
-        status: PaymentStatus = PaymentStatus.Pending,
-        parent_payment_id: Optional[str] = None,
-        refunded_amount: float = 0.0,
-    ) -> Payment:
+    async def create_payment(self, payment_in: PaymentCreate) -> Payment:
         try:
-            payment = Payment(
-                order_id=order_id,
-                method=method,
-                amount=amount,
-                currency=currency,
-                user_id=user_id,
-                transaction_id=transaction_id,
-                gateway_response=gateway_response,
-                status=status,
-                parent_payment_id=parent_payment_id,
-                refunded_amount=refunded_amount,
-            )
+            if payment_in.method == PaymentMethod.Stripe:
+                # For Stripe payments, we might create a checkout session here
+                # and store the session ID. The actual payment status update
+                # will happen via webhooks.
+                # This part assumes you've already created a Stripe Checkout Session
+                # and are now recording the payment attempt in your DB.
+                payment = Payment(
+                    order_id=payment_in.order_id,
+                    user_id=payment_in.user_id,
+                    method=payment_in.method,
+                    amount=payment_in.amount,
+                    currency=payment_in.currency,
+                    status=PaymentStatus.Pending,  # Initial status for Stripe payments
+                    stripe_customer_id=payment_in.stripe_customer_id,
+                    stripe_payment_intent_id=payment_in.stripe_payment_intent_id,
+                    stripe_checkout_session_id=payment_in.stripe_checkout_session_id,
+                )
+            else:
+                payment = Payment(
+                    order_id=payment_in.order_id,
+                    user_id=payment_in.user_id,
+                    method=payment_in.method,
+                    amount=payment_in.amount,
+                    currency=payment_in.currency,
+                    status=PaymentStatus.Pending,
+                )
+
             self.db.add(payment)
-            await self.db.flush()  # flush to assign PK
             await self.db.commit()
             await self.db.refresh(payment)
             return payment
         except Exception as e:
             await self.db.rollback()
-            raise RuntimeError(f"Failed to create payment: {e}") from e
+            raise e
 
     async def get_payment(self, payment_id: UUID) -> Optional[Payment]:
         result = await self.db.execute(select(Payment).where(Payment.id == payment_id))
         return result.scalar_one_or_none()
 
-    async def update_payment(
-        self,
-        payment_id: UUID,
-        updates: Dict[str, Any],
-    ) -> Optional[Payment]:
+    async def update_payment(self, payment_id: UUID, payment_in: PaymentUpdate) -> Optional[Payment]:
         payment = await self.get_payment(payment_id)
         if not payment:
-            raise ValueError(f"Payment with id {payment_id} not found")
+            return None
 
         try:
-            for key, value in updates.items():
-                if hasattr(payment, key):
-                    setattr(payment, key, value)
-            await self.db.flush()
+            update_data = payment_in.model_dump(exclude_unset=True)
+            for key, value in update_data.items():
+                setattr(payment, key, value)
+            
             await self.db.commit()
             await self.db.refresh(payment)
             return payment
         except Exception as e:
             await self.db.rollback()
-            raise RuntimeError(f"Failed to update payment: {e}") from e
+            raise e
 
     async def delete_payment(self, payment_id: UUID) -> bool:
         payment = await self.get_payment(payment_id)
         if not payment:
-            raise ValueError(f"Payment with id {payment_id} not found")
-
+            return False
         try:
             await self.db.delete(payment)
             await self.db.commit()
             return True
         except Exception as e:
             await self.db.rollback()
-            raise RuntimeError(f"Failed to delete payment: {e}") from e
+            raise e
 
-    async def get_all(
+    async def get_all_payments(
         self,
-        order_id: Optional[UUID] = None,
-        user_id: Optional[UUID] = None,
-        method: Optional[PaymentMethod] = None,
-        status: Optional[PaymentStatus] = None,
-        amount: Optional[float] = None,
-        currency: Optional[UUID] = None,
-        transaction_id: Optional[str] = None,
-        gateway_response: Optional[str] = None,
-        created_at: Optional[datetime] = None,
-        updated_at: Optional[datetime] = None,
-        refunded_amount: Optional[float] = None,
-        parent_payment_id: Optional[UUID] = None,
-        limit: int = 10,
-        offset: int = 0,
+        skip: int = 0,
+        limit: int = 100,
     ) -> List[Payment]:
-        try:
-            query = select(Payment)
-            filters = []
+        result = await self.db.execute(select(Payment).offset(skip).limit(limit))
+        return list(result.scalars().all())
 
-            if order_id:
-                filters.append(Payment.order_id == order_id)
-            if user_id:
-                filters.append(Payment.user_id == user_id)
-            if method:
-                filters.append(Payment.method == method)
-            if status:
-                filters.append(Payment.status == status)
-            if amount is not None:
-                filters.append(Payment.amount == amount)
-            if currency:
-                filters.append(Payment.currency == currency)
-            if transaction_id:
-                filters.append(Payment.transaction_id == transaction_id)
-            if gateway_response:
-                filters.append(Payment.gateway_response == gateway_response)
-            if created_at:
-                filters.append(Payment.created_at == created_at)
-            if updated_at:
-                filters.append(Payment.updated_at == updated_at)
-            if refunded_amount is not None:
-                filters.append(Payment.refunded_amount == refunded_amount)
-            if parent_payment_id:
-                filters.append(Payment.parent_payment_id == parent_payment_id)
+    async def update_payment_status_by_session_id(self, session_id: str, status: PaymentStatus):
+        result = await self.db.execute(
+            select(Payment).where(Payment.stripe_checkout_session_id == session_id)
+        )
+        payment = result.scalar_one_or_none()
+        if payment:
+            payment.status = status
+            await self.db.commit()
+            await self.db.refresh(payment)
+        return payment
 
-            if filters:
-                query = query.where(and_(*filters))
-
-            query = query.limit(limit).offset(offset)
-            result = await self.db.execute(query)
-            payments = result.scalars().all()
-
-            return payments
-
-        except Exception as e:
-            # No rollback on reads
-            raise RuntimeError(f"Failed to fetch payments: {e}") from e
+    async def update_payment_status_by_payment_intent_id(self, payment_intent_id: str, status: PaymentStatus):
+        result = await self.db.execute(
+            select(Payment).where(Payment.stripe_payment_intent_id == payment_intent_id)
+        )
+        payment = result.scalar_one_or_none()
+        if payment:
+            payment.status = status
+            await self.db.commit()
+            await self.db.refresh(payment)
+        return payment

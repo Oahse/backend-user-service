@@ -1,15 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status,BackgroundTasks
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
+from typing import Optional
 
 from core.database import get_db
 from services.category import CategoryService
-from schemas.category import CategoryCreate, CategoryRead
+from schemas.category import CategoryCreate
 from core.utils.response import Response
 from uuid import UUID
 
 
-import uuid
 
 router = APIRouter(prefix="/api/v1/categories", tags=["Categories"])
 

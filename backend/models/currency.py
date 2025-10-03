@@ -1,4 +1,4 @@
-from sqlalchemy.orm import mapped_column, Mapped, relationship, validates
+from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy import String, DateTime
 from core.database import Base, CHAR_LENGTH
 from datetime import datetime

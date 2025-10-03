@@ -1,10 +1,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import and_, or_, update, delete
+from sqlalchemy import and_
 from typing import List, Optional
-from datetime import datetime, timedelta
-from models.promocode import (PromoCode, uuid)
+from datetime import datetime
+from models.promocode import (PromoCode)
 from schemas.promocode import (UUID, PromoCodeCreate)
 
 

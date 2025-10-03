@@ -1,8 +1,6 @@
 from telegram import Update, Bot
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-from telegram.error import InvalidToken
+from telegram.ext import ContextTypes
 from typing import Optional
-from core.config import settings,logger
 
 
 class TelegramBotHandler:

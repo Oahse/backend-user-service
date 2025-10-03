@@ -1,4 +1,3 @@
-from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -27,7 +26,7 @@ AsyncSessionDB = sessionmaker(
 async def get_db():
     try:
         async with AsyncSessionDB() as session:
-            print(f"Database connected")
+            print("Database connected")
             yield session
     except Exception as e:
         # Log the error or handle it accordingly

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy import String, DateTime, Boolean,DECIMAL
-from core.database import Base, CHAR_LENGTH
+from core.database import Base
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID
 

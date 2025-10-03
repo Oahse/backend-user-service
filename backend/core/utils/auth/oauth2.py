@@ -1,9 +1,7 @@
 import os
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from fastapi.openapi.models import OAuthFlowsAuthorizationCode
 from pydantic import BaseModel
-from typing import Optional
 import jwt
 from datetime import datetime, timedelta
 

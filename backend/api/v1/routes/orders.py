@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-from typing import List, Optional
+from typing import Optional
 from datetime import datetime
-from schemas.orders import OrderSchema, OrderItemSchema,UpdateOrderSchema,OrderFilterSchema
-from models.orders import Order, OrderItem, OrderStatus
+from schemas.orders import OrderSchema, OrderItemSchema,UpdateOrderSchema
+from models.orders import OrderStatus
 from services.orders import OrderService, OrderItemService,UUID
 from core.database import get_db  # Make sure this returns AsyncSession
 from core.utils.response import Response

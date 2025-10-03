@@ -18,7 +18,7 @@ class PasswordManager:
             # Verify the hashed password against the input password
             self.ph.verify(hashed_password, plain_password)
             return True
-        except Exception as e:
+        except Exception:
             # Return False if an error occurs (e.g., password doesn't match)
             return False
 

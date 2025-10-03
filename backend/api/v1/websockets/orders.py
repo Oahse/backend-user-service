@@ -1,13 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, WebSocket, WebSocketDisconnect
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-from typing import List, Optional,Dict
-from datetime import datetime
-from schemas.orders import OrderSchema, OrderItemSchema,UpdateOrderSchema,OrderFilterSchema
-from models.orders import Order, OrderItem, OrderStatus
-from services.orders import OrderService, OrderItemService,UUID
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from typing import Dict
+from services.orders import OrderService, UUID
 from core.database import get_db  # Make sure this returns AsyncSession
-from core.utils.response import Response
 import json
 
 router = APIRouter(prefix="/ws/orders", tags=["Orders-WebSockets"])

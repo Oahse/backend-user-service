@@ -1,7 +1,6 @@
-import requests, os, json, asyncio,resend
-from email.message import EmailMessage
-from resend.exceptions import ResendError
-from aiosmtplib import SMTP
+import requests
+import os
+import resend
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from core.config import settings
 

@@ -9,7 +9,6 @@ from core.utils.response import Response
 from uuid import UUID
 
 
-import uuid
 
 router = APIRouter(prefix="/api/v1/inventories", tags=["Inventories"])
 

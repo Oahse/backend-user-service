@@ -1,15 +1,16 @@
 """
 Authentication service with user management and JWT token handling.
 """
-import secrets,string, re, uuid
+import secrets
+import uuid
 from datetime import datetime, timedelta
 from typing import Optional,List
 from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import selectinload  # or use joinedload if you prefer
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
-from fastapi import HTTPException, status, BackgroundTasks
+from sqlalchemy import select
+from fastapi import HTTPException, BackgroundTasks
 from services.email import EmailService
 from models.user import User, UserRole,EmailChangeRequestModel,Address
 from schemas.user import (

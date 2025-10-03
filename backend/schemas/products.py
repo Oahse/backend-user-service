@@ -1,7 +1,6 @@
 from datetime import datetime
 from enum import Enum as PyEnum
 from typing import List, Optional
-from decimal import Decimal
 from pydantic import BaseModel, Field, condecimal
 from schemas.category import CategoryRead
 from schemas.tag import TagRead

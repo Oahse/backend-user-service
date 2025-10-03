@@ -1,7 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import and_, or_
-from sqlalchemy.exc import NoResultFound
 from typing import List, Optional
 from uuid import UUID
 from models.currency import Currency

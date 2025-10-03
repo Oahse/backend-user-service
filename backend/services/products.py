@@ -1,15 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update, delete, and_
+from sqlalchemy import delete, and_
 from sqlalchemy.orm import selectinload
-from fastapi import BackgroundTasks, HTTPException
 from typing import List, Optional
-from datetime import datetime
 import json
 from models.products import uuid, Product, ProductVariant, ProductVariantImage, ProductVariantAttribute, AvailabilityStatus, Tag, InventoryProduct
-from schemas.products import UUID, ProductCreate, ProductVariantCreate, ProductVariantUpdate, ProductVariantRead, ProductVariantAttributeCreate, ProductVariantImageCreate
+from schemas.products import UUID, ProductCreate, ProductVariantCreate, ProductVariantUpdate, ProductVariantAttributeCreate, ProductVariantImageCreate
 from services.category import CategoryService
-from core.config import settings
 # from core.utils.kafka import KafkaProducer, send_kafka_message, is_kafka_available
 from core.utils.barcode import Barcode
 

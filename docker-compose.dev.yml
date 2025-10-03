@@ -1,117 +1,24 @@
 services:
-  redis:
-    image: redis:alpine
-    container_name: redis
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: users_db
+    volumes:
+      - postgres-db-data:/var/lib/postgresql/data
+    restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "5432:5432"
     networks:
       - webnet
-    volumes:
-      - redis-data:/data
-    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "users_db"]
       interval: 10s
       retries: 5
-      timeout: 10s
       start_period: 30s
-    deploy:
-      resources:
-        limits:
-          cpus: '0.2'        # 20% of one CPU core
-          memory: 200M       # max 200 MB RAM
-        reservations:
-          cpus: '0.1'        # reserve 10%
-          memory: 100M
-  
-  # kafka:
-  #   image: bitnami/kafka:3.8.0
-  #   container_name: kafka
-  #   environment:
-  #     - KAFKA_CFG_NODE_ID=0
-  #     - KAFKA_CFG_PROCESS_ROLES=controller,broker
-  #     - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
-  #     - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092  # <== important for inter-container comm
-  #     - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-  #     - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
-  #     - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
-  #     - KAFKA_KRAFT_CLUSTER_ID=abcdefghijklmnopqrstuv
-  #   restart: unless-stopped
-  #   networks:
-  #     - webnet
-  #   ports:
-  #     - "9092:9092"
-  #   healthcheck:
-  #     test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "kafka:9092", "--list"]
-  #     interval: 10s
-  #     retries: 5
-  #     timeout: 10s
-  #     start_period: 30s
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: '0.3'        # max 30% CPU
-  #         memory: 300M       # max 300 MB RAM
-  #       reservations:
-  #         cpus: '0.15'
-  #         memory: 150M
-  
-  # postgres-db:
-  #   image: postgres:15-alpine
-  #   container_name: postgres-db
-  #   environment:
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: postgres
-  #     POSTGRES_DB: banwee_db
-  #   volumes:
-  #     - postgres-db-data:/var/lib/postgresql/data
-  #   restart: unless-stopped
-  #   ports:
-  #     - "5432:5432"  # optional in dev
-  #   networks:
-  #     - webnet
-  #   healthcheck:
-  #     test: ["CMD", "pg_isready", "-U", "postgres", "-d", "banwee_db"]
-  #     interval: 10s
-  #     retries: 5
-  #     start_period: 30s
-  #     timeout: 10s
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: '0.3'
-  #         memory: 300M
-  #       reservations:
-  #         cpus: '0.15'
-  #         memory: 150M
-
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.dev
-    # command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-    container_name: backend
-    depends_on:
-      redis:
-        condition: service_healthy
-      # postgres-db:
-      #   condition: service_healthy
-    ports:
-      - "8000:8000"
-    networks:
-      - webnet
-    volumes:
-      - ./backend:/usr/src/app  # live code changes
-      - /usr/src/app/__pycache__  # exclude pycache from volume mount
-    env_file:
-      - .env.local
-    working_dir: /usr/src/app
-    restart: unless-stopped
-    environment:
-      - POSTGRES_SERVER=banwee-db.c2po20oyum9p.us-east-1.rds.amazonaws.com
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      timeout: 10s
     deploy:
       resources:
         limits:
@@ -121,41 +28,39 @@ services:
           cpus: '0.15'
           memory: 150M
 
-  celery_worker:
+  backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.celery
-    # command: celery -A tasks worker --loglevel=info
-    container_name: celery_worker
+      dockerfile: Dockerfile.dev
+    container_name: backend
     depends_on:
-      redis:
+      postgres-db:
         condition: service_healthy
+    ports:
+      - "8000:8000"
+    networks:
+      - webnet
     volumes:
-      - ./backend:/usr/src/app  # live code changes
-      - /usr/src/app/__pycache__  # exclude pycache from volume mount
+      - ./backend:/usr/src/app
+      - /usr/src/app/__pycache__
     env_file:
       - .env.local
     working_dir: /usr/src/app
     restart: unless-stopped
-    networks:
-      - webnet
     environment:
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - POSTGRES_SERVER=postgres-db
     deploy:
       resources:
         limits:
-          cpus: '0.2'
-          memory: 200M
+          cpus: '0.3'
+          memory: 300M
         reservations:
-          cpus: '0.1'
-          memory: 100M
+          cpus: '0.15'
+          memory: 150M
 
 networks:
   webnet:
     driver: bridge
 
 volumes:
-  # postgres-db-data:
-  redis-data:
+  postgres-db-data:

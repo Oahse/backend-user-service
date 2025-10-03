@@ -1,5 +1,5 @@
-from sqlalchemy.orm import mapped_column, Mapped, relationship, validates
-from sqlalchemy import Enum, Integer, String, DateTime, ForeignKey, Boolean, Text, DECIMAL, Table, Column
+from sqlalchemy.orm import mapped_column, Mapped, relationship
+from sqlalchemy import Enum, Integer, String, DateTime, ForeignKey, Text, DECIMAL, Table, Column
 from core.database import Base, CHAR_LENGTH
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -109,7 +109,7 @@ class ProductVariant(Base):
         }
 
     def __repr__(self):
-        return f"<ProductVariant(id={self.id!r}, name={self.name!r}, value={self.value!r}, sku={self.sku!r})>"
+        return f"<ProductVariant(id={self.id!r}, name={self.name!r}, sku={self.sku!r})>"
 
 class ProductVariantAttribute(Base):
     __tablename__ = "product_variant_attributes"

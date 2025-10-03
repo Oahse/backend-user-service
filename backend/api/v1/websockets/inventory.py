@@ -1,6 +1,5 @@
 from fastapi import WebSocket, WebSocketDisconnect, APIRouter
 from typing import List
-from uuid import UUID
 
 router = APIRouter(prefix="/ws/inventory", tags=["Inventory WebSocket"])
 
